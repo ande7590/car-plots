@@ -33,8 +33,17 @@ public class ScrollableResultsIterator<ENTITY_TYPE> implements Iterator<ENTITY_T
 		//check if we can call next(), but only perform this ONCE (see Java documentation
 		//for how hasNext() should behave), so multiple calls to hasNext() are safe.
 		if (isFirst && !isEmpty) {		
+			
 			//peek ahead (only once)
-			boolean hasResults = scrollableResult.next();
+			boolean hasResults = false;
+			try {
+				//hibernate race-condition throwing a NPE here? 
+				hasResults = scrollableResult.next();
+			} 
+			catch (Exception ex) {				
+				hasResults = false;
+			}
+			
 			//tell next() not to advance iterator
 			skipFetch = true;
 			//check if first call to next() was false (this means the results are empty)
