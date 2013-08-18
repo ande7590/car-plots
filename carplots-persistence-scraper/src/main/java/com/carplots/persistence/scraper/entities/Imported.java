@@ -46,7 +46,7 @@ public class Imported implements Serializable {
 	private String sellerType;
 	
 	@Column(name = "ListingID", nullable=false)
-	private Integer listingId;
+	private Long listingId;
 	
 	@Column(name = "Miles", nullable=false)
 	private Integer miles;
@@ -159,11 +159,11 @@ public class Imported implements Serializable {
 		this.sellerType = sellerType;
 	}
 
-	public Integer getListingId() {
+	public Long getListingId() {
 		return listingId;
 	}
 
-	public void setListingId(Integer listingId) {
+	public void setListingId(Long listingId) {
 		this.listingId = listingId;
 	}
 
