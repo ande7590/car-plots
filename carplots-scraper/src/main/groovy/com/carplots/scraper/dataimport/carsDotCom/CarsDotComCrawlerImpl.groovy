@@ -24,7 +24,7 @@ class CarsDotComCrawlerImpl implements CarsDotComCrawler {
 			carsDotComRepo, scraperService) 
 	}	
 	
-	//todo: java conf
+	//TODO: java conf
 	static class CarsDotComCrawlerConfig {
 		long scraperBatchId = 10		
 	}

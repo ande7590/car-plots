@@ -123,32 +123,37 @@ class CarsDotComScraperHtmlImpl implements CarsDotComScraper {
 				}					
 				logIfNull(dealerPhone, 'dealerPhone', errors)													
 							
-				//set required fields first											
-				def i = new Imported(
-					listingId: listingId as Long,
-					miles: cleanNumeric(miles.text()) as Integer,
-					price: cleanNumeric(price.text()) as Integer,
-					carYear: cleanNumeric(year.text()) as Integer,
-					bodyStyle: cleanString(bodyStyle?.text()),
-					carName: cleanString(carName?.text()),
-					color: cleanString(color?.text()),
-					dealerPhone: cleanNumeric(dealerPhone?.text()).replaceAll(/^0$/, ''),
-					engine: cleanString(engine?.text()),
-					sellerName: cleanString(dealerName?.text()),
-					scraperRunId: CarsDotComScraperHtmlImplConfig.scraperBatchId,
-					errFlg: (errors.warning > initialWarning)? '1' : '0',
-					sellerType: 'unknown',
-					searchId: searchId
-				)	
-				
-				imported << i						
-					
+				//set required fields first					
+				try {						
+					def i = new Imported(
+						listingId: listingId as Long,
+						miles: cleanNumeric(miles.text()) as Integer,
+						price: cleanNumeric(price.text()) as Integer,
+						carYear: cleanNumeric(year.text()) as Integer,
+						bodyStyle: cleanString(bodyStyle?.text()),
+						carName: cleanString(carName?.text()),
+						color: cleanString(color?.text()),
+						dealerPhone: cleanNumeric(dealerPhone?.text()).replaceAll(/^0$/, ''),
+						engine: cleanString(engine?.text()),
+						sellerName: cleanString(dealerName?.text()),
+						scraperRunId: CarsDotComScraperHtmlImplConfig.scraperRunId,
+						errFlg: (errors.warning > initialWarning)? '1' : '0',
+						sellerType: 'unknown',
+						searchId: searchId
+					)					
+					imported << i
+				}						
+				catch (NumberFormatException ex) { 
+					//don't worry about it
+				}					
 			} 
 			catch (Throwable ex) {
 				errors.critical++
 				logger.error(ex.getMessage(), ex)
 			}						
 		}
+		
+		logger.debug("returning ${imported.size()} records")
 		
 		return imported
 	}
@@ -191,8 +196,9 @@ class CarsDotComScraperHtmlImpl implements CarsDotComScraper {
 		}
 	}
 	
-	//todo: java conf
+	//TODO: java conf
 	static class CarsDotComScraperHtmlImplConfig {
 		static final long scraperBatchId = 10
+		static final long scraperRunId = -1
 	}	
 }

@@ -1,0 +1,47 @@
+package com.carplots.scraper
+
+import javax.persistence.EntityManager;
+
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory;
+
+import com.carplots.persistence.ScraperPersistenceInitializationService;
+import com.carplots.scraper.dataimport.DataImportManager
+import com.google.inject.Guice;
+import com.google.inject.Inject;
+import com.google.inject.Injector
+
+class ScraperMain {
+	
+	static Logger logger = LoggerFactory.getLogger(ScraperMain.class)
+	
+	void run() {
+		
+		Injector injector = Guice.createInjector(new ScraperModule())
+		
+		//start persistence framework
+		injector.getInstance(ScraperPersistenceInitializationService.class).start()
+		EntityManager entityManager = injector.getInstance(EntityManager.class)
+
+		//start a transaction (doesn't really matter since 
+		//mySQL storage engine doesn't support it)
+		entityManager.getTransaction().begin()
+		
+		//begin importing data
+		try {
+			injector.getInstance(DataImportManager.class).importData()
+			entityManager.getTransaction().commit()
+		}
+		catch (Exception ex) {
+			//once again, doesn't matter with the current storage engine
+			entityManager.getTransaction().rollback()
+		}					
+	}
+	
+	static main(args) {
+		logger.debug('Starting program')
+		(new ScraperMain()).run()				
+		logger.debug('Finishing program')
+	}		
+
+}
