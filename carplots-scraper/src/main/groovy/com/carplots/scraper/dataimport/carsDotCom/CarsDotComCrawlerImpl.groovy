@@ -16,7 +16,7 @@ class CarsDotComCrawlerImpl implements CarsDotComCrawler {
 	@Inject
 	CarplotsScraperService scraperService
 	
-	CarsDotComCrawlerConfig crawlerConfig = new CarsDotComCrawlerConfig()		
+	final CarsDotComCrawlerConfig crawlerConfig = new CarsDotComCrawlerConfig()		
 	
 	@Override
 	public Iterator<CarsDotComCrawlerData> iterator() {
