@@ -81,7 +81,7 @@ class DataImportManagerCarsDotComImpl implements DataImportManager {
 		return this.isImportSuccessful
 	}
 	
-	//config class
+	//TODO: java conf
 	static class DataImportManagerConcurrentImplConfiguration {
 		private static final int maxScraperQueueSize = 100
 		private static final int maxEmitterQueueSize = 100
@@ -107,13 +107,12 @@ class DataImportManagerCarsDotComImpl implements DataImportManager {
 		
 		@Override
 		public void run() {
-			logger.debug('Starting crawler')
-			//crawl the website
+			logger.debug('Starting crawler')			
 			try {
+				//crawl the website via iterator				
 				for (CarsDotComCrawlerData crawlerData : crawler) {
 					logger.trace('Adding crawlerData item')
 					outputQ.put(new ConsumerWorkItem<CarsDotComCrawlerData>(crawlerData, false))
-					logger.debug('Added crawlerData item')
 				}
 			} 
 			catch (Exception ex) {

@@ -166,7 +166,7 @@ class CarsDotComScraperHtmlImpl implements CarsDotComScraper {
 	private def cleanString(str) {
 		if (str == null) return ''
 		//allow only alpha numeric (and space)
-		str.replaceAll(/(?i)[^A-Z0-9 ]/, '').
+		str.replaceAll(/(?i)[^A-Z0-9. ]/, '').
 		replaceAll(/\s+/, ' '). // with at most one space between words
 		replaceAll(/^\s+/, ''). // no leading space
 		replaceAll(/\s+$/, '')  // no trailing space
