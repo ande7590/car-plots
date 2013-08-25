@@ -10,12 +10,13 @@ import javax.persistence.EntityManagerFactory;
 import org.jodah.typetools.TypeResolver;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public abstract class AbstractDao<ENTITY_TYPE extends Serializable, ENTITY_PK_TYPE> 
 	implements GenericDao<ENTITY_TYPE, ENTITY_PK_TYPE> {
 		
 	@Inject
-	private EntityManager em;
+	private Provider<EntityManager> emProvider;
 	
 	private Class<ENTITY_TYPE> entityType;
 	private Class<ENTITY_PK_TYPE> entityPkType;
@@ -28,7 +29,7 @@ public abstract class AbstractDao<ENTITY_TYPE extends Serializable, ENTITY_PK_TY
 	}		
 	
 	protected EntityManager getEntityManager() {
-		return this.em;
+		return this.emProvider.get();
 	}
 	
 	protected Class<ENTITY_TYPE> getEntityType() {

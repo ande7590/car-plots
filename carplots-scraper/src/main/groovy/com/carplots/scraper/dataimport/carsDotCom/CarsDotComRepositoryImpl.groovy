@@ -3,6 +3,10 @@ package com.carplots.scraper.dataimport.carsDotCom
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory;
 
+import com.carplots.scraper.ScraperConfigService;
+import com.carplots.scraper.dataimport.carsDotCom.CarsDotComRepository.CarsDotComRepositoryFetchException
+import com.google.inject.Inject;
+
 import groovyx.net.http.HTTPBuilder
 import static groovyx.net.http.ContentType.*
 import static groovyx.net.http.Method.*
@@ -11,29 +15,28 @@ class CarsDotComRepositoryImpl implements CarsDotComRepository {
 	
 	private static final Logger logger = LoggerFactory.getLogger(CarsDotComRepositoryImpl.class)
 	
-	//TODO: javaconf
-	private static final int FAILURE_SLEEP = 5000
-	private static final int RECORDS_PER_PAGE = 250
-	private static final int NUM_RETRIES = 3
-	private static final String BASE_QUERY_URL = 
-		"http://www.cars.com/for-sale/searchresults.action?stkTyp=U&tracktype=usedcc&searchSource=QUICK_FORM&enableSeo=1&rpp=${RECORDS_PER_PAGE}"
+	@Inject
+	CarsDotComRepositoryConfiguration repoConfig	
+		
+	CarsDotComRepositoryImpl() {}
 	
-	private final HTTPBuilder http;
-		
-	CarsDotComRepositoryImpl() {		
-		def http = new HTTPBuilder(BASE_QUERY_URL)		
-		http.handler.failure = { resp ->
-			doHandleFailure(resp)	
-		}		
-		this.http = http
-	}
-		
-	/* (non-Javadoc)
-	 * @see com.carplots.scraper.dataimport.carsDotCom.CarsDotComRepository#getSummaryPageHtml(java.lang.Object, java.lang.Object, java.lang.Object, java.lang.Object, java.lang.Object)
-	 */
+	private final ThreadLocal<HTTPBuilder> httpBuilder = 
+		new ThreadLocal<HTTPBuilder>() {
+			protected def initialValue() {
+				def http = new HTTPBuilder(repoConfig.scraperBaseURL)
+				http.handler.failure = { resp ->
+					doHandleFailure(resp)
+				}
+				return http
+			}
+		}
+			
 	@Override
-	String getSummaryPageHtml(def makeId, def modelId, def zipcode, def radius, def pageNum) {
+	String getSummaryPageHtml(def makeId, def modelId, def zipcode, def radius, def pageNum) 
+		throws CarsDotComRepositoryFetchException {
 		
+		def http = httpBuilder.get()
+			
 		def query = [
 			mkId: makeId,
 			mdId: modelId,
@@ -58,7 +61,7 @@ class CarsDotComRepositoryImpl implements CarsDotComRepository {
 		
 		if (reader == null) {
 			logger.error('Unable to retrieve HTTP data, crawler aborting.')
-			throw new Exception('Unable to retrieve HTTP data.')
+			throw new CarsDotComRepositoryFetchException('Unable to retrieve HTTP data.')
 		} 
 				
 		return reader.getText() 
@@ -66,7 +69,24 @@ class CarsDotComRepositoryImpl implements CarsDotComRepository {
 	
 	void doHandleFailure(def resp) {
 		logger.error("Remote HTTP request failure ${resp.toString()}")
-	}
+	}	
 	
+	static class CarsDotComRepositoryConfiguration {
+		@Inject
+		ScraperConfigService configService		
+		
+		int getFailureSleepMS() {
+			return configService.getApplicationParameter('failureSleepMS') as int
+		}		
+		int getRecordsPerPage() { 
+			return configService.getApplicationParameter('recordsPerPage') as int
+		}		
+		int getNumRetries() {
+			return configService.getApplicationParameter('numRetries') as int
+		}			
+		String getScraperBaseURL() {
+			return configService.getApplicationParameter('scraperBaseURL')
+		}
+	}
 	
 }

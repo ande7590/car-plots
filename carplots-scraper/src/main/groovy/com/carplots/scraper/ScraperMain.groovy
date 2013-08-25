@@ -30,10 +30,12 @@ class ScraperMain {
 		//begin importing data
 		try {
 			injector.getInstance(DataImportManager.class).importData()
+			logger.debug('Done importing data')
 			entityManager.getTransaction().commit()
 		}
 		catch (Exception ex) {
 			//once again, doesn't matter with the current storage engine
+			logger.warn('Caught exception from data import', ex)
 			entityManager.getTransaction().rollback()
 		}					
 	}

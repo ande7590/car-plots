@@ -1,5 +1,7 @@
 package com.carplots.scraper.dataimport.carsDotCom
 
+import com.carplots.scraper.ScraperConfigService;
+import com.carplots.scraper.dataimport.carsDotCom.CarsDotComRepository.CarsDotComRepositoryFetchException
 import com.google.inject.Inject;
 
 import java.util.zip.ZipEntry;
@@ -8,14 +10,16 @@ import java.util.zip.ZipOutputStream
 
 import sun.misc.IOUtils;
 
-class CarsDotComRepositoryCachedImpl extends CarsDotComRepositoryImpl {
-		
-	private CarsDotComCachedRepositoryConfig config = new CarsDotComCachedRepositoryConfig()		
+class CarsDotComRepositoryCachedImpl extends CarsDotComRepositoryImpl {	
+	
+	@Inject
+	CarsDotComCachedRepositoryConfig cachedRepositoryConfig  
+			
 	private boolean isCacheSetup = false	
 		
 	@Override
 	String getSummaryPageHtml(Object makeId, Object modelId, Object zipcode,
-			Object radius, Object pageNum) {
+			Object radius, Object pageNum) throws CarsDotComRepositoryFetchException {
 			
 		//check if cache needs creating
 		if (!isCacheSetup) {
@@ -36,7 +40,7 @@ class CarsDotComRepositoryCachedImpl extends CarsDotComRepositoryImpl {
 		def entry = null
 		def fileName = [
 			makeId, modelId, zipcode, radius, pageNum].join('_') + '.zip'		
-		def entryPath = config.cacheDir + File.separator + fileName
+		def entryPath = cachedRepositoryConfig.cacheDir + File.separator + fileName
 		def cacheFile = new File(entryPath )				
 		if (cacheFile.exists()) {
 			def is = new FileInputStream(entryPath)
@@ -54,7 +58,7 @@ class CarsDotComRepositoryCachedImpl extends CarsDotComRepositoryImpl {
 			makeId, modelId, zipcode, radius, pageNum].join('_') 
 		def fileName =  entryName + '.zip'		
 		
-		def os = new FileOutputStream(config.cacheDir + File.separator + fileName)
+		def os = new FileOutputStream(cachedRepositoryConfig.cacheDir + File.separator + fileName)
 		def zipOs = new ZipOutputStream(os)
 		try {
 			def entry = new ZipEntry(entryName)
@@ -70,13 +74,13 @@ class CarsDotComRepositoryCachedImpl extends CarsDotComRepositoryImpl {
 	private void setupCache() {				
 		
 		//create cache directory if it doesn't exist
-		mkdirAll(config.cacheDir)
+		mkdirAll(cachedRepositoryConfig.cacheDir)
 		
 		//sanity check
-		def cacheDir = new File(config.cacheDir)
+		def cacheDir = new File(cachedRepositoryConfig.cacheDir)
 		if (cacheDir.exists() == false) {
 			throw new FileNotFoundException('Cache directory doesn\'t exist: ' +
-				config.cacheDir)
+				cachedRepositoryConfig.cacheDir)
 		}				
 	}
 			
@@ -95,8 +99,12 @@ class CarsDotComRepositoryCachedImpl extends CarsDotComRepositoryImpl {
 		}
 	}
 			
-	//TODO: java conf
-	static class CarsDotComCachedRepositoryConfig {
-		def cacheDir = '/home/mike/.cacheTest/lastRun'
+	static class CarsDotComCachedRepositoryConfig {		
+		@Inject
+		ScraperConfigService configService	
+		
+		String getCacheDir() {
+			return configService.getApplicationParameter('repositoryCacheDirectory')
+		}	
 	}
 }

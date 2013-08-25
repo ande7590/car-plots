@@ -5,8 +5,9 @@ import java.util.Iterator;
 import spock.lang.Shared;
 
 import com.carplots.scraper.dataimport.carsDotCom.CarsDotComCrawlerIterator.CarsDotComCrawlerData
-import com.carplots.service.scraper.CarplotsScraperService;
-import com.google.inject.Inject;
+import com.carplots.service.scraper.CarplotsScraperService
+import com.google.inject.Inject
+import com.carplots.scraper.ScraperConfigService
 
 class CarsDotComCrawlerImpl implements CarsDotComCrawler {
 
@@ -16,17 +17,21 @@ class CarsDotComCrawlerImpl implements CarsDotComCrawler {
 	@Inject
 	CarplotsScraperService scraperService
 	
-	final CarsDotComCrawlerConfig crawlerConfig = new CarsDotComCrawlerConfig()		
+	@Inject
+	CarsDotComCrawlerConfig crawlerConfig
 	
 	@Override
 	public Iterator<CarsDotComCrawlerData> iterator() {
-		return new CarsDotComCrawlerIterator(crawlerConfig.scraperBatchId, 
-			carsDotComRepo, scraperService) 
-	}	
+		return new CarsDotComCrawlerIterator(crawlerConfig.scraperBatchId,
+			carsDotComRepo, scraperService)
+	}
 	
-	//TODO: java conf
 	static class CarsDotComCrawlerConfig {
-		long scraperBatchId = 10		
+		@Inject
+		ScraperConfigService configService
+		int getScraperBatchId() {
+			return configService.getApplicationParameter('scraperBatchId') as int
+		}
 	}
 	
 }

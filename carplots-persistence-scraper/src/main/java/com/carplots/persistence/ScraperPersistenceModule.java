@@ -20,11 +20,10 @@ import com.google.inject.persist.jpa.JpaPersistModule;
 
 public class ScraperPersistenceModule extends AbstractCarplotsModule{
 
-	//TODO: java conf
 	public final static String CARPLOTS_SCRAPER_UNIT_NAME = "jpaCarplotsScraperUnit";
 	
 	@Override
-	protected void configure() {						
+	protected void configure() {												
 		bind(ImportedDao.class).to(ImportedDaoHibernateImpl.class);
 		bind(MakeModelDao.class).to(MakeModelDaoHibernateImpl.class);
 		bind(ScraperBatchDao.class).to(ScraperBatchDaoHibernateImpl.class);

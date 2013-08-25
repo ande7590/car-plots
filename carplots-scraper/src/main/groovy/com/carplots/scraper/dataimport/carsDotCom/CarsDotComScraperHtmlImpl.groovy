@@ -8,11 +8,16 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory;
 
 import com.carplots.persistence.scraper.entities.Imported;
+import com.carplots.scraper.ScraperConfigService;
 import com.carplots.scraper.dataimport.carsDotCom.CarsDotComCrawlerIterator.CarsDotComCrawlerData;
+import com.google.inject.Inject;
 
 class CarsDotComScraperHtmlImpl implements CarsDotComScraper {
 	
 	final static Logger logger = LoggerFactory.getLogger(CarsDotComScraperHtmlImpl.class)
+	
+	@Inject
+	CarsDotComScraperHtmlImplConfig carsDotComScraperConfig
 	
 	private static final ThreadLocal<XmlSlurper> xmlSlurper = new ThreadLocal<XmlSlurper>() {
 		@Override
@@ -25,11 +30,11 @@ class CarsDotComScraperHtmlImpl implements CarsDotComScraper {
 		
 	}
 	
-	Collection<Imported> getImported(CarsDotComCrawlerData crawlerData) {		
+	Collection<Imported> getImported(CarsDotComCrawlerData crawlerData) {
 		def imported = []
-		crawlerData.getPages().each { pageHtml ->			
+		crawlerData.getPages().each { pageHtml ->
 			imported += doParse(pageHtml, crawlerData.search.searchId)
-		}				
+		}
 		return imported
 	}
 	
@@ -59,22 +64,22 @@ class CarsDotComScraperHtmlImpl implements CarsDotComScraper {
 		def imported = []
 		
 		logger.debug('parsing page html')
-		def page = getSlurper().parseText(pageHtml)		
+		def page = getSlurper().parseText(pageHtml)
 				
-		def vehicles = findAllByClassName(page, { className ->			
+		def vehicles = findAllByClassName(page, { className ->
 			className ==~ /vehicle/
 		})
 		logger.debug("processing ${vehicles.size()} vehicles")
 						
-		vehicles.each { v ->						
+		vehicles.each { v ->
 			
 			try {
 				def initialWarning = errors.warning
 				def listingIdMatch = v['@id'] =~ /\d+$/
 				
 				//if we can't parse listing, miles, price, or year, skip
-				def listingId = (listingIdMatch)? 
-					listingIdMatch[0] : null				
+				def listingId = (listingIdMatch)?
+					listingIdMatch[0] : null
 				if (abortIfNull(listingId, 'listingId', errors)) return
 				
 				def price = getFirst findAllByClassName(v) { className ->
@@ -85,7 +90,7 @@ class CarsDotComScraperHtmlImpl implements CarsDotComScraper {
 				def miles = getFirst findAllByClassName(v) { className ->
 					className ==~ /(?i).*?miles.*?/
 				}
-				if (abortIfNull(miles, 'miles', errors)) return					
+				if (abortIfNull(miles, 'miles', errors)) return
 				
 				def year = getFirst findAllByClassName(v) { className ->
 					className ==~ /(?i).*?modelYear.*?/
@@ -95,36 +100,36 @@ class CarsDotComScraperHtmlImpl implements CarsDotComScraper {
 				//these fields are nice to have, but not needed
 				def color = getFirst findAllByClassName(v) { className ->
 					className ==~ /(?i).*?color.*?/
-				}			 
-				logIfNull(color, 'color', errors)				
+				}
+				logIfNull(color, 'color', errors)
 				
 				def bodyStyle = getFirst findAllByClassName(v) { className ->
 					className ==~ /(?i).*?bodyStyle.*?/
-				}			
+				}
 				logIfNull(bodyStyle, 'bodyStyle', errors)
 				
 				def carName = getFirst findAllByClassName(v) { className ->
 					className ==~ /(?i).*?mmt.*?/
-				}								
+				}
 				logIfNull(carName, 'carName', errors)
 					
 				def engine = getFirst findAllByClassName(v) { className ->
 					className ==~ /(?i).*?engine.*?/
-				}			
+				}
 				logIfNull(engine, 'engine', errors)
 				
 				def dealerName = getFirst findAllByClassName(v) { className ->
 					className ==~ /(?i).*?sellerName.*?/
-				}				
+				}
 				logIfNull(dealerName, 'dealerName', errors)
 								
 				def dealerPhone = getFirst findAllByClassName(v) { className ->
 					className ==~ /(?i).*?seller-phone.*?/
-				}					
-				logIfNull(dealerPhone, 'dealerPhone', errors)													
+				}
+				logIfNull(dealerPhone, 'dealerPhone', errors)
 							
-				//set required fields first					
-				try {						
+				//set required fields first
+				try {
 					def i = new Imported(
 						listingId: listingId as Long,
 						miles: cleanNumeric(miles.text()) as Integer,
@@ -136,21 +141,21 @@ class CarsDotComScraperHtmlImpl implements CarsDotComScraper {
 						dealerPhone: cleanNumeric(dealerPhone?.text()).replaceAll(/^0$/, ''),
 						engine: cleanString(engine?.text()),
 						sellerName: cleanString(dealerName?.text()),
-						scraperRunId: CarsDotComScraperHtmlImplConfig.scraperRunId,
+						scraperRunId: carsDotComScraperConfig.scraperRunId,
 						errFlg: (errors.warning > initialWarning)? '1' : '0',
 						sellerType: 'unknown',
 						searchId: searchId
-					)					
+					)
 					imported << i
-				}						
-				catch (NumberFormatException ex) { 
+				}
+				catch (NumberFormatException ex) {
 					//don't worry about it
-				}					
-			} 
+				}
+			}
 			catch (Throwable ex) {
 				errors.critical++
 				logger.error(ex.getMessage(), ex)
-			}						
+			}
 		}
 		
 		logger.debug("returning ${imported.size()} records")
@@ -159,7 +164,7 @@ class CarsDotComScraperHtmlImpl implements CarsDotComScraper {
 	}
 	
 	private def cleanNumeric(num) {
-		if (num == null) return '0'		
+		if (num == null) return '0'
 		num.replaceAll(/\D/, '') //allow only digits
 	}
 	
@@ -185,20 +190,25 @@ class CarsDotComScraperHtmlImpl implements CarsDotComScraper {
 		}
 	}
 	
-	private def createTrySetDecorator(trySetObj, errorCallback) {			
+	private def createTrySetDecorator(trySetObj, errorCallback) {
 		return { setterName, value ->
-			try {				
+			try {
 				trySetObj[setterName](value)
-			} 
+			}
 			catch (Exception ex) {
-				errorCallback(trySetObj, setterName, ex)				
+				errorCallback(trySetObj, setterName, ex)
 			}
 		}
 	}
 	
-	//TODO: java conf
 	static class CarsDotComScraperHtmlImplConfig {
-		static final long scraperBatchId = 10
-		static final long scraperRunId = -1
-	}	
+		@Inject
+		ScraperConfigService configService		
+		int getScraperBatchId() {
+			return configService.getApplicationParameter('scraperBatchId') as int
+		}
+		int getScraperRunId() {
+			return configService.getApplicationParameter('scraperRunId') as int
+		}
+	}
 }

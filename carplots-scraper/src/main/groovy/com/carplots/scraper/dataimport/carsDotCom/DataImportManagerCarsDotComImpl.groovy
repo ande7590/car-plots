@@ -8,7 +8,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory;
 
+import com.carplots.common.ApplicationConfigurationException;
 import com.carplots.persistence.scraper.entities.Imported;
+import com.carplots.persistence.scraper.entities.ScraperBatch
+import com.carplots.persistence.scraper.entities.ScraperRun;
+import com.carplots.scraper.ScraperConfigService
+import com.carplots.scraper.ScraperConfigService.ScraperConfigServicePropertyMissing;
 import com.carplots.scraper.dataimport.DataImportManager;
 import com.carplots.scraper.dataimport.ImportedEmitter;
 import com.carplots.scraper.dataimport.carsDotCom.CarsDotComCrawlerIterator.CarsDotComCrawlerData
@@ -28,29 +33,92 @@ class DataImportManagerCarsDotComImpl implements DataImportManager {
 	@Inject
 	ImportedEmitter emitter
 	
+	@Inject
+	CarplotsScraperService scraperService
+	
+	@Inject
+	ScraperConfigService configService
+	
+	@Inject
+	DataImportManagerConcurrentImplConfiguration dataManagerConfig
+	
+	private ScraperRun scraperRun
+		
 	@Override
 	public void importData() {
 		
 		logger.debug('Beginning data import')
+					
+		try {
+			setupScraper()
+			runScraper()
+		} catch (Exception ex) {
+			logger.error('Import exception', ex);
+			isImportSuccessful = false;
+		} finally {
+			finishScraper()
+		}
+				
+		logger.debug('Workers done')
+	}
+	
+	private void setupScraper() {
+		
+		//retrieve the batch (data collection parameters),
+		//and create a run for it (a record for this particular data collection)
+		def scraperBatchId = getDataManagerConfig().scraperBatchId
+		def scraperBatch = scraperService.getScraperBatches().find { batch ->
+			batch.scraperBatchId == scraperBatchId
+		}
+		if (scraperBatch == null) {
+			throw new ApplicationConfigurationException(
+				"scraperBatchId '${scraperBatchId}', not found cannot start scraper.");
+		}
+		
+		//create the DB record
+		def scraperRun = new ScraperRun(
+			scraperBatch: scraperBatch,
+			scraperRunDt: new Date(),
+			runCompleted: false)
+		scraperService.addScraperRun(scraperRun)
+		
+		//publish the run information to the configuration service
+		configService.setApplicationParameter('scraperRunId', scraperRun.scraperRunId as String)
+				
+		this.scraperRun = scraperRun
+	}
+	
+	private void finishScraper() {
+		if (scraperRun == null) {
+			logger.error('Finishing scraper with NULL scraperRun')
+		} else {
+			scraperRun.runCompleted = true
+			scraperService.updateScraperRun(scraperRun)
+		}
+	}
+	
+	private void runScraper() {
+		
+		def config = dataManagerConfig
 		
 		//create an output queue for the crawler,
 		//input queue for the scraper
 		BlockingQueue<CarsDotComCrawlerData> crawlerOutputQ =
 			new ArrayBlockingQueue<ConsumerWorkItem<CarsDotComCrawlerData>>(
-				DataImportManagerConcurrentImplConfiguration.maxScraperQueueSize, true)
+				config.maxScraperQueueSize, true)
 		
 		//create an output queue for the scraper,
 		//input queue for the emitter
 		BlockingQueue<ConsumerWorkItem<CarsDotComCrawlerData>> scraperOutputQ =
 			new ArrayBlockingQueue<CarsDotComCrawlerData>(
-				DataImportManagerConcurrentImplConfiguration.maxScraperQueueSize, true)
+				config.maxEmitterQueueSize, true)
 		
 		AtomicBoolean abnormalTermination = new AtomicBoolean(false)
 			
 		def crawlerThread = new Thread(new CrawlerThreadWorker(crawler, crawlerOutputQ, abnormalTermination))
-		def scraperThread = new Thread(new ScraperThreadWorker(scraper, crawlerOutputQ, scraperOutputQ, 
+		def scraperThread = new Thread(new ScraperThreadWorker(scraper, crawlerOutputQ, scraperOutputQ,
 			abnormalTermination))
-		def emitterRunner = new EmitterThreadWorker(emitter, scraperOutputQ, 
+		def emitterRunner = new EmitterThreadWorker(emitter, scraperOutputQ,
 			abnormalTermination)
 		
 		//start 2 threads
@@ -67,8 +135,6 @@ class DataImportManagerCarsDotComImpl implements DataImportManager {
 		else {
 			isImportSuccessful = true
 		}
-				
-		logger.debug('Workers done')
 	}
 	
 	private boolean isImportSuccessful = true
@@ -81,16 +147,29 @@ class DataImportManagerCarsDotComImpl implements DataImportManager {
 		return this.isImportSuccessful
 	}
 	
-	//TODO: java conf
+	//Config Object
 	static class DataImportManagerConcurrentImplConfiguration {
-		private static final int maxScraperQueueSize = 100
-		private static final int maxEmitterQueueSize = 100
+		@Inject
+		ScraperConfigService configService
+					
+		private int getMaxScraperQueueSize() {
+			return configService.getApplicationParameter('maxScraperQueueSize') as int
+		}
+		
+		private int getMaxEmitterQueueSize() {
+			return configService.getApplicationParameter('maxEmitterQueueSize') as int
+		}
+		
+		private int getScraperBatchId() {
+			return configService.getApplicationParameter('scraperBatchId') as int			 
+		}
 	}
+
 	
 	//Worker for the crawler
 	static class CrawlerThreadWorker implements Runnable {
 		
-		final static Logger logger = LoggerFactory.getLogger(CrawlerThreadWorker.class)				
+		final static Logger logger = LoggerFactory.getLogger(CrawlerThreadWorker.class)
 		
 		final CarsDotComCrawler crawler
 		final BlockingQueue<ConsumerWorkItem<CarsDotComCrawlerData>> outputQ
@@ -107,14 +186,14 @@ class DataImportManagerCarsDotComImpl implements DataImportManager {
 		
 		@Override
 		public void run() {
-			logger.debug('Starting crawler')			
+			logger.debug('Starting crawler')
 			try {
-				//crawl the website via iterator				
+				//crawl the website via iterator
 				for (CarsDotComCrawlerData crawlerData : crawler) {
 					logger.trace('Adding crawlerData item')
 					outputQ.put(new ConsumerWorkItem<CarsDotComCrawlerData>(crawlerData, false))
 				}
-			} 
+			}
 			catch (Exception ex) {
 				logger.error('Crawler caught exception.', ex)
 				this.abnormalTermination.set(true)
@@ -133,7 +212,7 @@ class DataImportManagerCarsDotComImpl implements DataImportManager {
 
 		final static Logger logger = LoggerFactory.getLogger(ScraperThreadWorker.class)
 				
-		final CarsDotComScraper scraper		
+		final CarsDotComScraper scraper
 		final BlockingQueue<CarsDotComCrawlerData> inputQ
 		final BlockingQueue<Imported> outputQ
 		final AtomicBoolean abnormalTermination
@@ -163,7 +242,7 @@ class DataImportManagerCarsDotComImpl implements DataImportManager {
 						def crawlerData = producerData.getItem()
 						scraper.getImported(crawlerData).each {imported ->
 							outputQ.put(new ConsumerWorkItem<Imported>(imported, false))
-						}					
+						}
 					}
 				}
 			}
@@ -174,7 +253,7 @@ class DataImportManagerCarsDotComImpl implements DataImportManager {
 			finally {
 				ConsumerWorkItem<Imported> sentinel = new ConsumerWorkItem<Imported>(null, true)
 				outputQ.add(sentinel)
-			}			
+			}
 		}
 	}
 	
@@ -183,7 +262,7 @@ class DataImportManagerCarsDotComImpl implements DataImportManager {
 
 		static final Logger logger = LoggerFactory.getLogger(EmitterThreadWorker.class)
 				
-		final ImportedEmitter emitter		
+		final ImportedEmitter emitter
 		final BlockingQueue<ConsumerWorkItem<Imported>> inputQ
 		final AtomicBoolean abnormalTermination
 		
@@ -201,17 +280,17 @@ class DataImportManagerCarsDotComImpl implements DataImportManager {
 			try {
 				while (true) {
 					ConsumerWorkItem<Imported> importedItemToEmit = inputQ.take()
-					if (importedItemToEmit.isEndSentinel() == true) {				
+					if (importedItemToEmit.isEndSentinel() == true) {
 						break
 					} else {
 						emitter.emit(importedItemToEmit.getItem())
 					}
 				}
 			}
-			catch (Exception ex) {				
+			catch (Exception ex) {
 				logger.error('Emitter thread caught exception', ex)
 				abnormalTermination.set(true)
-			}			
+			}
 		}
 	}
 	
