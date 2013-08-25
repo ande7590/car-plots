@@ -83,8 +83,7 @@ class DataImportManagerCarsDotComImpl implements DataImportManager {
 		scraperService.addScraperRun(scraperRun)
 		
 		//publish the run information to the configuration service
-		configService.setApplicationParameter('scraperRunId', scraperRun.scraperRunId as String)
-				
+		configService.setApplicationParameter('scraperRunId', scraperRun.scraperRunId as String)				
 		this.scraperRun = scraperRun
 	}
 	

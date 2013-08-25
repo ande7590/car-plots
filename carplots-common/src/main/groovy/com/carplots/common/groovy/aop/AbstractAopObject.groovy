@@ -1,7 +1,5 @@
 package com.carplots.common.groovy.aop
 
-import sun.org.mozilla.classfile.SuperBlock;
-
 class AbstractAopObject extends GroovyObjectSupport
 	implements GroovyInterceptable {
 

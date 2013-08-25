@@ -11,12 +11,13 @@ import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector
 
-class ScraperMain {
+class Main {
 	
-	static Logger logger = LoggerFactory.getLogger(ScraperMain.class)
+	static Logger logger = LoggerFactory.getLogger(Main.class)
 	
 	void run() {
 		
+		//load dependency injection framework
 		Injector injector = Guice.createInjector(new ScraperModule())
 		
 		//start persistence framework
@@ -42,7 +43,7 @@ class ScraperMain {
 	
 	static main(args) {
 		logger.debug('Starting program')
-		(new ScraperMain()).run()				
+		(new Main()).run()				
 		logger.debug('Finishing program')
 	}		
 

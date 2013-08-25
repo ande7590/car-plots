@@ -20,22 +20,27 @@ class CarsDotComRepositoryImpl implements CarsDotComRepository {
 		
 	CarsDotComRepositoryImpl() {}
 	
-	private final ThreadLocal<HTTPBuilder> httpBuilder = 
-		new ThreadLocal<HTTPBuilder>() {
-			protected def initialValue() {
-				def http = new HTTPBuilder(repoConfig.scraperBaseURL)
-				http.handler.failure = { resp ->
-					doHandleFailure(resp)
-				}
-				return http
-			}
+	
+	private volatile ThreadLocal<HTTPBuilder> httpBuilderThreadLocal
+	private final Object threadLocalLock = new Object()
+	private HTTPBuilder getHttpBuilder() {
+		if (httpBuilderThreadLocal == null) {
+			synchronized (threadLocalLock) {
+				if (httpBuilderThreadLocal == null) {
+					httpBuilderThreadLocal = getHttpBuilderThreadLocal(
+						repoConfig.scraperBaseURL)
+				}	
+			}			
 		}
+		return httpBuilderThreadLocal.get()
+	}
+	
 			
 	@Override
 	String getSummaryPageHtml(def makeId, def modelId, def zipcode, def radius, def pageNum) 
 		throws CarsDotComRepositoryFetchException {
 		
-		def http = httpBuilder.get()
+		def http = getHttpBuilder()
 			
 		def query = [
 			mkId: makeId,
@@ -44,16 +49,16 @@ class CarsDotComRepositoryImpl implements CarsDotComRepository {
 			rd: radius
 		]
 		if (pageNum > 1) 
-			query.rn = ((pageNum as int) * RECORDS_PER_PAGE) as String			
+			query.rn = ((pageNum as int) * repoConfig.getRecordsPerPage()) as String			
 		
 		StringReader reader = null
 		def retries = 0		
-		while (reader == null && retries < NUM_RETRIES ) {
+		while (reader == null && retries < repoConfig.getNumRetries()) {
 			reader = http.get(query:query, contentType: TEXT)
 			if (reader == null) {
 				logger.warn('Cars.com http request returned nothing, sleeping...')
 				try {
-					Thread.sleep(FAILURE_SLEEP)
+					Thread.sleep(repoConfig.getFailureSleepMS())
 				} catch (Exception ex) {} 							
 				retries++
 			}						
@@ -71,6 +76,18 @@ class CarsDotComRepositoryImpl implements CarsDotComRepository {
 		logger.error("Remote HTTP request failure ${resp.toString()}")
 	}	
 	
+	private def getHttpBuilderThreadLocal(final String scraperBaseURL) {
+		return new ThreadLocal<HTTPBuilder>() {
+			protected def initialValue() {
+				def http = new HTTPBuilder(scraperBaseURL)
+				http.handler.failure = { resp ->
+					doHandleFailure(resp)
+				}
+				return http
+			}
+		}
+	}
+	
 	static class CarsDotComRepositoryConfiguration {
 		@Inject
 		ScraperConfigService configService		
@@ -87,6 +104,6 @@ class CarsDotComRepositoryImpl implements CarsDotComRepository {
 		String getScraperBaseURL() {
 			return configService.getApplicationParameter('scraperBaseURL')
 		}
-	}
+	}	
 	
 }

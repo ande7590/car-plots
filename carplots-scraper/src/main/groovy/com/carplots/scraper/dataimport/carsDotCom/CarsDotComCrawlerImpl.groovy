@@ -2,8 +2,6 @@ package com.carplots.scraper.dataimport.carsDotCom
 
 import java.util.Iterator;
 
-import spock.lang.Shared;
-
 import com.carplots.scraper.dataimport.carsDotCom.CarsDotComCrawlerIterator.CarsDotComCrawlerData
 import com.carplots.service.scraper.CarplotsScraperService
 import com.google.inject.Inject

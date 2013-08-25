@@ -9,7 +9,7 @@ import java.util.Properties
 @Singleton
 class ScraperConfigServiceImpl implements ScraperConfigService {
 	
-	private static final String propertyFileName = 'scraper.properties'
+	private static final String scraperConfigPath = System.getProperty("com.carplots.scaper.configFilePath")
 	private static final String missingPropertyValue = UUID.randomUUID().toString()
 		
 	private final Object configLock = new Object()	
@@ -21,9 +21,13 @@ class ScraperConfigServiceImpl implements ScraperConfigService {
 		
 		def propertyValue = missingPropertyValue
 		synchronized (configLock) {			
+			
+			if (scraperConfigPath == null) {
+				throw new Exception("com.carplots.scaper.configFilePath system variable must point to scraper properties file.")	
+			}			
 			if (properties == null) {
 				properties = new Properties()
-				properties.load(this.getClass().getClassLoader().getResourceAsStream(propertyFileName))				
+				properties.load((new File(scraperConfigPath)).newInputStream())				
 			}
 			if (runtimePropertyMap.containsKey(propertyName)) {
 				propertyValue = runtimePropertyMap[propertyName]

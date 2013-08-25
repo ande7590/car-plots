@@ -9,7 +9,7 @@ import spock.lang.Specification;
 
 class CarsDotComRepositoryTest extends Specification {
 	
-	static Logger logger = LoggerFactory.getLogger(CarsDotComRepositoryTest.class)
+/*	static Logger logger = LoggerFactory.getLogger(CarsDotComRepositoryTest.class)
 	
 	static def MAKE_CHRYSLER = 20008
 	static def MODEL_PT_CRUISER = 21744
@@ -33,6 +33,6 @@ class CarsDotComRepositoryTest extends Specification {
 		Matcher regexMatcher = regex.matcher(htmlData)
 		boolean result = regexMatcher.find()
 		return result
-	}	
+	}	*/
 
 }

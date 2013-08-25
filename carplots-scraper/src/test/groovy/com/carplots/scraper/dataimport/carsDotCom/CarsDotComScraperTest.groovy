@@ -18,7 +18,7 @@ import spock.lang.Specification;
 
 class CarsDotComScraperTest extends Specification {
 
-	final static Logger logger = LoggerFactory.getLogger(CarsDotComScraperTest.class)
+/*	final static Logger logger = LoggerFactory.getLogger(CarsDotComScraperTest.class)
 	
 	@Shared
 	EntityManager entityManager
@@ -109,6 +109,6 @@ class CarsDotComScraperTest extends Specification {
 		out[6].dealerPhone == ''			
 		
 		
-	}
+	}*/
 	
 }
