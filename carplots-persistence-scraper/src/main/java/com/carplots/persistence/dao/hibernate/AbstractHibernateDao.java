@@ -33,7 +33,7 @@ public class AbstractHibernateDao<ENTITY_TYPE extends Serializable, ENTITY_PK_TY
 	}
 
 	@Override
-	public Iterator<ENTITY_TYPE> iterateByExample(ENTITY_PK_TYPE example) {
+	public Iterator<ENTITY_TYPE> iterateByExample(ENTITY_TYPE example) {
 		
 		final Example entityExample = Example.create(example).excludeZeroes();
 		final Criteria criteria = getSession().createCriteria(getEntityType()).add(entityExample);
@@ -42,7 +42,7 @@ public class AbstractHibernateDao<ENTITY_TYPE extends Serializable, ENTITY_PK_TY
 	}
 	
 	@SuppressWarnings("unchecked")
-	private Session getSession() {
+	protected Session getSession() {
 		
 		final EntityManager entityManager = getEntityManager();
 		final Object delegate = entityManager.getDelegate();

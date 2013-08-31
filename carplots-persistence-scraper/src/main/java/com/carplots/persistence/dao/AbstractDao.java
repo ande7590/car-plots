@@ -72,6 +72,6 @@ public abstract class AbstractDao<ENTITY_TYPE extends Serializable, ENTITY_PK_TY
 	public abstract Iterator<ENTITY_TYPE> iterateAll();
 	
 	@Override
-	public abstract Iterator<ENTITY_TYPE> iterateByExample(ENTITY_PK_TYPE example);
+	public abstract Iterator<ENTITY_TYPE> iterateByExample(ENTITY_TYPE example);
 	
 }

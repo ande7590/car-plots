@@ -1,34 +1,34 @@
 package com.carplots.scraper
 
+import com.carplots.common.ApplicationConfigurationException;
 import com.carplots.scraper.ScraperConfigService.ScraperConfigServicePropertyMissing
 import com.google.inject.Singleton;
 
+import java.io.InputStream;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Properties
 
 
 @Singleton
 class ScraperConfigServiceImpl implements ScraperConfigService {
 	
-	private static final String scraperConfigPath = System.getProperty("com.carplots.scaper.configFilePath")
+	private static final String CONFIGURATION_FILE = 'scraper.properties'
 	private static final String missingPropertyValue = UUID.randomUUID().toString()
+	private static Properties properties
 		
 	private final Object configLock = new Object()	
 	private final def runtimePropertyMap = [:]
 	
-	private Properties properties
+	
 	
 	private def get(propertyName) {				
 		
 		def propertyValue = missingPropertyValue
-		synchronized (configLock) {			
-			
-			if (scraperConfigPath == null) {
-				throw new Exception("com.carplots.scaper.configFilePath system variable must point to scraper properties file.")	
+		synchronized (configLock) {						
+			if (properties == null) {				
+				loadProperties()	
 			}			
-			if (properties == null) {
-				properties = new Properties()
-				properties.load((new File(scraperConfigPath)).newInputStream())				
-			}
 			if (runtimePropertyMap.containsKey(propertyName)) {
 				propertyValue = runtimePropertyMap[propertyName]
 			}
@@ -56,5 +56,25 @@ class ScraperConfigServiceImpl implements ScraperConfigService {
 		}				
 	}
 	
-	
+	//copied from simple logger
+	private static void loadProperties() {	
+		InputStream input = (InputStream) AccessController.doPrivileged(
+			new PrivilegedAction() {
+			  public Object run() {
+				ClassLoader threadCL = Thread.currentThread().getContextClassLoader()
+				if (threadCL != null) {
+				  return threadCL.getResourceAsStream(CONFIGURATION_FILE)
+				} else {
+				  return ClassLoader.getSystemResourceAsStream(CONFIGURATION_FILE)
+				}
+			  }
+			})	
+		if (input != null) {
+			properties = new Properties()
+			properties.load(input)
+		}
+		else {
+			throw new ApplicationConfigurationException('Could not load scraper.properties from config folder.')
+		}		
+	}
 }

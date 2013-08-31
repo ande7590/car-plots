@@ -1,7 +1,7 @@
 allprojects {
-	apply plugin: 'java'
-	apply plugin: 'groovy'
-	
+
+	apply plugin: 'java'	
+
 	version = '1.0'
 
 	repositories {
@@ -9,11 +9,8 @@ allprojects {
 		mavenCentral()
 	}
 
-	dependencies {
-		
-		//common project libraries
-		compile project(':carplots-common')
-		
+	dependencies {				
+
 		//logging
 		compile 'org.slf4j:slf4j-api:1.7.5'
 		compile 'org.slf4j:slf4j-simple:1.7.5'
@@ -22,7 +19,31 @@ allprojects {
 		compile 'com.google.inject:guice:3.0'		
 		
 		//spock & related		
+		testCompile 'org.codehaus.groovy:groovy-all:2.0.5'
 		testCompile 'org.spockframework:spock-guice:0.7-groovy-2.0'
 		testCompile 'org.spockframework:spock-core:0.7-groovy-2.0'
+	}
+}
+
+def groovyProjects() {
+	//assume service and persistence projects do not use Groovy in code other
+	//than the Spock tests.
+	subprojects.findAll {		
+		!it.name.contains('service') &&
+		!it.name.contains('persistence')		
+	}
+}
+
+configure(groovyProjects()) {
+	apply plugin: 'groovy'
+	dependencies {
+		compile 'org.codehaus.groovy:groovy-all:2.0.5'
+	}
+}
+
+configure(subprojects.findAll {it.name != 'carplots-common'}) {
+	//common project libraries
+	dependencies {
+		 compile project(':carplots-common')
 	}
 }
