@@ -1,0 +1,23 @@
+buildscript {
+	repositories {
+		mavenCentral()	
+	}
+	dependencies {
+		classpath 'eu.appsatori:gradle-fatjar-plugin:0.2-rc1'
+	}
+}
+
+apply plugin: 'fatjar'
+apply plugin: 'groovy'
+
+dependencies {
+	compile(':carplots-service-analysis')
+}
+
+task packageRService(dependsOn: 'compileJava') << {
+	
+}
+
+task printLibs << {
+	println libsDir.absolutePath
+}
