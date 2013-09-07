@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory;
 
-import com.carplots.common.ApplicationConfigurationException;
+import com.carplots.common.exception.ApplicationConfigurationException;
 import com.carplots.persistence.scraper.entities.Imported;
 import com.carplots.persistence.scraper.entities.ScraperBatch
 import com.carplots.persistence.scraper.entities.ScraperRun;

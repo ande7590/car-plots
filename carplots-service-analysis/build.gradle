@@ -8,7 +8,9 @@ buildscript {
 }
 
 apply plugin: 'fatjar'
+apply plugin: 'groovy'
 
 dependencies {
 	compile project(':carplots-persistence-scraper')
+	compile 'com.google.guava:guava:14.0.1'
 }

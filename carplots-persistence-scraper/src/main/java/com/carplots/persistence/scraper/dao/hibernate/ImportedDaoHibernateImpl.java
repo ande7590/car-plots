@@ -13,20 +13,20 @@ import com.sun.org.apache.bcel.internal.generic.GETSTATIC;
 
 public class ImportedDaoHibernateImpl
 	extends AbstractHibernateDao<Imported, Long> 
-	implements ImportedDao {
-	
-	@Override
-	public Iterator<Imported> iterateByMakeId(long makeId) {		
+	implements ImportedDao {	
 
+	@Override
+	public Iterator<Imported> iterateByMakeModelId(long makeModelId) {
+		
 		//ORM mappings don't represent de-normalized table structure, hand code SQL
-		final String makeIdQuery = 
+		final String modelIdQuery = 
 				"SELECT i.* FROM Imported i " +
 						"INNER JOIN Search search ON i.CarSearchID = search.SearchID " +
-				"WHERE search.MakeID = :makeId";
+				"WHERE search.MakeModelID = :makeModelId";
 		
-		final Query query = getSession().createSQLQuery(makeIdQuery)
+		final Query query = getSession().createSQLQuery(modelIdQuery)
 				.addEntity(Imported.class)
-				.setLong("makeId", makeId);
+				.setLong("makeModelId", makeModelId);
 		final Iterator<Imported> iter = 
 				new ScrollableResultsIterator<>(query.scroll());
 		
@@ -34,17 +34,63 @@ public class ImportedDaoHibernateImpl
 	}
 
 	@Override
-	public Iterator<Imported> iterateByModelId(long modelId) {
+	public Iterator<Imported> iterateByMakeModelId(long makeModelId, String zipcode) {
 		
 		//ORM mappings don't represent de-normalized table structure, hand code SQL
-		final String modelIdQuery = 
+		final String modelIdZipcodeQuery = 
 				"SELECT i.* FROM Imported i " +
 						"INNER JOIN Search search ON i.CarSearchID = search.SearchID " +
-				"WHERE search.ModelID = :modelId";
+				"WHERE search.MakeModelID = :makeModelId AND " +
+						" search.Zipcode = :zipcode";
 		
-		final Query query = getSession().createSQLQuery(modelIdQuery)
+		final Query query = getSession().createSQLQuery(modelIdZipcodeQuery)
 				.addEntity(Imported.class)
-				.setLong("modelId", modelId);
+				.setLong("makeModelId", makeModelId)
+				.setString("zipcode", zipcode);
+		final Iterator<Imported> iter = 
+				new ScrollableResultsIterator<>(query.scroll());
+		
+		return iter;
+	}
+
+	@Override
+	public Iterator<Imported> iterateByMakeModelId(long makeModelId,
+			long scraperRunId) {
+		
+		//ORM mappings don't represent de-normalized table structure, hand code SQL
+		final String modelIdScraperRunQuery = 
+				"SELECT i.* FROM Imported i " +
+						"INNER JOIN Search search ON i.CarSearchID = search.SearchID " +
+				"WHERE search.MakeModelID = :makeModelId AND " + 
+						"i.ScraperRunId = :scraperRunId";
+		
+		final Query query = getSession().createSQLQuery(modelIdScraperRunQuery)
+				.addEntity(Imported.class)
+				.setLong("makeModelId", makeModelId)
+				.setLong("scraperRunId", scraperRunId);
+		final Iterator<Imported> iter = 
+				new ScrollableResultsIterator<>(query.scroll());
+		
+		return iter;
+	}
+
+	@Override
+	public Iterator<Imported> iterateByMakeModelId(long makeModelId,
+			String zipcode, long scraperRunId) {
+		
+		//ORM mappings don't represent de-normalized table structure, hand code SQL
+		final String modelIdScraperRunQuery = 
+				"SELECT i.* FROM Imported i " +
+						"INNER JOIN Search search ON i.CarSearchID = search.SearchID " +
+				"WHERE search.MakeModelID = :makeModelId AND  " +
+					"search.Zipcode = :zipcode AND " +
+					"i.ScraperRunId = :scraperRunId";
+		
+		final Query query = getSession().createSQLQuery(modelIdScraperRunQuery)
+				.addEntity(Imported.class)
+				.setLong("makeModelId", makeModelId)
+				.setString("zipcode", zipcode)
+				.setLong("scraperRunId", scraperRunId);
 		final Iterator<Imported> iter = 
 				new ScrollableResultsIterator<>(query.scroll());
 		

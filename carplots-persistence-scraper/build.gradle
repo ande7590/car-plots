@@ -1,4 +1,6 @@
 
+apply plugin: 'groovy'
+
 dependencies {
 	compile 'org.hibernate:hibernate-entitymanager:4.2.3.Final'
 	compile 'org.hibernate:hibernate-c3p0:4.2.3.Final'

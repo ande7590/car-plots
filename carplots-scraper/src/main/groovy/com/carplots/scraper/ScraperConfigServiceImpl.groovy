@@ -1,6 +1,6 @@
 package com.carplots.scraper
 
-import com.carplots.common.ApplicationConfigurationException;
+import com.carplots.common.exception.ApplicationConfigurationException;
 import com.carplots.scraper.ScraperConfigService.ScraperConfigServicePropertyMissing
 import com.google.inject.Singleton;
 
