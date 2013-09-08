@@ -47,3 +47,7 @@ configure(subprojects.findAll {it.name != 'carplots-common'}) {
 		 compile project(':carplots-common')
 	}
 }
+
+task wrapper(type: Wrapper) {
+	gradleVersion = '1.5'
+}

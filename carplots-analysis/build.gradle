@@ -11,13 +11,18 @@ apply plugin: 'fatjar'
 apply plugin: 'groovy'
 
 dependencies {
-	compile(':carplots-service-analysis')
+	compile project(':carplots-service-analysis')	
 }
 
-task packageRService(dependsOn: 'compileJava') << {
-	
+task copyRService(dependsOn: 'fatJar', type: Copy) {
+		from libsDir.absolutePath
+		into 'src/main/R/libs'
 }
 
-task printLibs << {
-	println libsDir.absolutePath
+fatJar {
+	manifest {
+		attributes(
+			'Main-Class': 'com.carplots.analysis.wrapper.TestDriver')
+	}
 }
+build.dependsOn 'copyRService'
