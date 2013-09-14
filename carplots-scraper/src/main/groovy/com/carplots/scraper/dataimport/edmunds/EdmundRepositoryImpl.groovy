@@ -3,7 +3,9 @@ package com.carplots.scraper.dataimport.edmunds
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory;
 
+import com.carplots.scraper.AbstractScraperRepository;
 import com.carplots.scraper.ScraperConfigService;
+import com.carplots.scraper.dataimport.edmunds.EdmundsRepository.EdmundsRepositoryFetchException;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.sun.corba.se.impl.activation.ListServers;
@@ -12,7 +14,9 @@ import groovyx.net.http.ContentType;
 import groovyx.net.http.HTTPBuilder;
 import groovyx.net.http.Method.*;
 
-class EdmundRepositoryImpl {
+class EdmundRepositoryImpl 
+	extends AbstractScraperRepository 
+	implements EdmundsRepository {
 	
 	private static final Logger logger = LoggerFactory.getLogger(EdmundRepositoryImpl.class)
 	
@@ -30,8 +34,6 @@ class EdmundRepositoryImpl {
 		"toyota", "volkswagen", "volvo"
 	]
 	
-	static String baseURL = 'http://www.edmunds.com/api/vehicle-directory-ajax/findmakemodels' +
-			'?fmt=json&ps=all&yearFormat=expanded&excludepreprod&make='
 	
 	@Inject
 	EdmundsRepositoryConfiguration repoConfig
@@ -40,12 +42,52 @@ class EdmundRepositoryImpl {
 		return edmundsMakes.clone();
 	}
 	
-	public def getMakeMetaDate(def makeName) {
+	String getMakeMetaData(def makeName) 
+		throws EdmundsRepositoryFetchException {
 		
+		if (edmundsMakes.find { it == makeName } == null) {
+			throw new IllegalArgumentException('Make {$makeName} not found.')
+		}
+		
+		def http = getHttpBuilder()
+		def query = getScraperBaseURL() + makeName
+		
+		StringReader reader = null
+		def retries = 0
+		while (reader == null && retries < repoConfig.getNumRetries()) {
+			reader = http.get(query:query, contentType: ContentType.TEXT)
+			if (reader == null) {
+				logger.warn('Edmunds http request returned nothing, sleeping...')
+				try {
+					Thread.sleep(repoConfig.getNumRetries())
+				} catch (Exception ex) {}
+				retries++
+			}
+		}
+	}
+	
+	@Override
+	protected String getScraperBaseURL() {
+		return repoConfig.getScraperBaseURL()
+	}
+
+	@Override
+	protected void doHandleFailure(Object response) {
+		throw EdmundsRepositoryFetchException("Remote request failure ${resp.toString()}")
 	}
 	
 	static class EdmundsRepositoryConfiguration {
 		@Inject
 		ScraperConfigService configService
+
+		String getScraperBaseURL() {
+			return configService.getApplicationParameter('edmundsBaseURL') as String
+		}
+		int getNumRetries() {
+			return configService.getApplicationParameter('numRetries') as int
+		}
+		int getFailureSleepMS() {
+			return configService.getApplicationParameter('failureSleepMS') as int
+		}
 	}
 }
