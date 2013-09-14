@@ -1,6 +1,7 @@
 package com.carplots.scraper.dataimport.carsDotCom
 
 import org.slf4j.Logger
+
 import org.slf4j.LoggerFactory;
 
 import com.carplots.scraper.ScraperConfigService;
@@ -19,22 +20,6 @@ class CarsDotComRepositoryImpl implements CarsDotComRepository {
 	CarsDotComRepositoryConfiguration repoConfig	
 		
 	CarsDotComRepositoryImpl() {}
-	
-	
-	private volatile ThreadLocal<HTTPBuilder> httpBuilderThreadLocal
-	private final Object threadLocalLock = new Object()
-	private HTTPBuilder getHttpBuilder() {
-		if (httpBuilderThreadLocal == null) {
-			synchronized (threadLocalLock) {
-				if (httpBuilderThreadLocal == null) {
-					httpBuilderThreadLocal = getHttpBuilderThreadLocal(
-						repoConfig.scraperBaseURL)
-				}	
-			}			
-		}
-		return httpBuilderThreadLocal.get()
-	}
-	
 			
 	@Override
 	String getSummaryPageHtml(def makeId, def modelId, def zipcode, def radius, def pageNum) 
@@ -72,21 +57,11 @@ class CarsDotComRepositoryImpl implements CarsDotComRepository {
 		return reader.getText() 
 	}
 	
-	void doHandleFailure(def resp) {
+	protected void doHandleFailure(def resp) {
 		logger.error("Remote HTTP request failure ${resp.toString()}")
 	}	
 	
-	private def getHttpBuilderThreadLocal(final String scraperBaseURL) {
-		return new ThreadLocal<HTTPBuilder>() {
-			protected def initialValue() {
-				def http = new HTTPBuilder(scraperBaseURL)
-				http.handler.failure = { resp ->
-					doHandleFailure(resp)
-				}
-				return http
-			}
-		}
-	}
+	
 	
 	static class CarsDotComRepositoryConfiguration {
 		@Inject
