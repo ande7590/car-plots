@@ -1,10 +1,10 @@
-package com.carplots.scraper
+package com.carplots.scraper.dataimport
 
 import groovyx.net.http.HTTPBuilder;
 
 public abstract class AbstractScraperRepository {
 	
-	private AbstractScraperRepository() {}
+	protected AbstractScraperRepository() {}
 	
 	
 	private final Object threadLocalLock = new Object()

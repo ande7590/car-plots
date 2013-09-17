@@ -3,8 +3,8 @@ package com.carplots.scraper.dataimport.edmunds
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory;
 
-import com.carplots.scraper.AbstractScraperRepository;
 import com.carplots.scraper.ScraperConfigService;
+import com.carplots.scraper.dataimport.AbstractScraperRepository;
 import com.carplots.scraper.dataimport.edmunds.EdmundsRepository.EdmundsRepositoryFetchException;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
