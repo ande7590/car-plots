@@ -10,7 +10,7 @@ class EdmundsRepositoryCachedImpl
 	extends EdmundsRepositoryImpl {
 
 	@Inject
-	EdmundsRepositoryCachedConfig cachedRepositoryConfig	
+	EdmundsRepositoryCachedConfig cachedRepositoryConfig
 	
 	@Override
 	public String getMakeModelData(String makeName, String modelName)
@@ -19,7 +19,7 @@ class EdmundsRepositoryCachedImpl
 		def pageHtml = getCachedEntry(makeName, modelName)
 		if (pageHtml == null) {
 			pageHtml = super.getMakeModelData(makeName, modelName)
-			setCachedEntry(makeName, modelName, pageHtml) 
+			setCachedEntry(makeName, modelName, pageHtml)
 		}
 				
 		return pageHtml
@@ -45,8 +45,8 @@ class EdmundsRepositoryCachedImpl
 		def entryName = "${makeName}_${modelName}"
 		synchronized (cacheMutex) {
 			getCache().setCachedEntry(entryName, pageHtml)
-		}	
-	}	
+		}
+	}
 			
 	private final Object cacheMutex = new Object()
 	private volatile Cache<String> cache

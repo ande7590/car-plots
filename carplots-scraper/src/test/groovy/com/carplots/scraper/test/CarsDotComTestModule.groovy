@@ -1,6 +1,9 @@
 package com.carplots.scraper.test
 
 import com.carplots.persistence.ScraperPersistenceModule
+import com.carplots.scraper.ScraperConfigService;
+import com.carplots.scraper.ScraperConfigService.ScraperConfigServicePropertyMissing;
+import com.carplots.scraper.ScraperConfigServiceImpl;
 import com.carplots.scraper.dataimport.DataImportManager;
 import com.carplots.scraper.dataimport.ImportedEmitter;
 import com.carplots.scraper.dataimport.ImportedEmitterScraperServiceImpl;
@@ -21,6 +24,7 @@ class CarsDotComTestModule extends AbstractModule {
 	@Override
 	protected void configure() {	
 		bind(CarsDotComCrawler.class).to(CarsDotComCrawlerImpl.class)
+		bind(ScraperConfigService.class).to(ScraperConfigServiceImpl.class)
 		bind(CarsDotComRepository.class).to(CarsDotComRepositoryCachedImpl.class)
 		bind(CarsDotComScraper.class).to(CarsDotComScraperHtmlImpl.class)
 		install(new CarplotsScraperServiceModule())

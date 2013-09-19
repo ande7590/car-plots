@@ -7,3 +7,5 @@ build
 .settings
 .groovy
 .prefs
+.RData
+.Rhistory

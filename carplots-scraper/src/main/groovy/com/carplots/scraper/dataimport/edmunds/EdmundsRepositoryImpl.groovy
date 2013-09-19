@@ -1,14 +1,21 @@
 package com.carplots.scraper.dataimport.edmunds
 
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.firefox.FirefoxBinary;
+import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.firefox.FirefoxProfile;
+import org.openqa.selenium.support.ui.ExpectedCondition;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory;
 
 import com.carplots.scraper.ScraperConfigService;
-import com.carplots.scraper.dataimport.AbstractScraperRepository;
+import com.carplots.scraper.dataimport.AbstractHttpBuilderScraperRepository;
 import com.carplots.scraper.dataimport.edmunds.EdmundsRepository.EdmundsRepositoryFetchException;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.sun.corba.se.impl.activation.ListServers;
+import com.sun.xml.internal.ws.api.streaming.XMLStreamReaderFactory.Default;
 
 import static groovyx.net.http.ContentType.*;
 import static groovyx.net.http.Method.*
@@ -16,7 +23,6 @@ import groovyx.net.http.HTTPBuilder;
 import groovyx.net.http.Method.*;
 
 class EdmundsRepositoryImpl
-	extends AbstractScraperRepository
 	implements EdmundsRepository {
 	
 	private static final Logger logger = LoggerFactory.getLogger(EdmundsRepositoryImpl.class)
@@ -51,14 +57,14 @@ class EdmundsRepositoryImpl
 			throw new IllegalArgumentException('Make {$makeName} not found.')
 		}
 		
-		def reader = getReader("/${makeName}")
+		def html = getPageHtml("/${makeName}")
 		
-		if (reader == null) {
+		if (html == null || html.trim().isEmpty()) {
 			final def message = "Unable to retrieve HTTP data for ${makeName}";
 			throw new EdmundsRepositoryFetchException(message)
 		}
 		
-		return reader.getText()
+		return html
 	}
 
 	@Override
@@ -69,43 +75,45 @@ class EdmundsRepositoryImpl
 			throw new IllegalArgumentException('Make {$makeName} not found.')
 		}
 		
-		def reader = getReader("/${makeName}/${modelName}")
+		String html = getPageHtml("/${makeName}/${modelName}")
 		
-		if (reader == null) {
+		if (html == null || html.trim().isEmpty()) {
 			final def message = "Unable to retrieve HTTP data for ${makeName}, ${modelName}";
 			throw new EdmundsRepositoryFetchException(message)
 		}
 		
-		return reader.getText()
+		return html
+	}
+			
+	private def getMakeJSON(def makeName) {
+		
+		def http = new HTTPBuilder(repoConfig.getMakeJSONSearchURL())
+		def query = ''
+		
 	}
 		
-	private def getReader(def path) {
-		def http = getHttpBuilder()
-		StringReader reader = null
-		def retries = 0
-		while (reader == null && retries < repoConfig.getNumRetries()) {
-			reader = http.get(path:path, contentType: TEXT)
-			if (reader == null) {
-				logger.warn('Edmunds http request returned nothing, sleeping...')
-				try {
-					Thread.sleep(repoConfig.getNumRetries())
-				} catch (Exception ex) {}
-				retries++
-			}
+	private def getPageHtml(def path) {
+		def webDriver = getWebDriver()
+		webDriver.get(repoConfig.getScraperBaseURL() + path)
+		(new WebDriverWait(webDriver, 10)).until(new ExpectedCondition<Boolean>() {
+			public Boolean apply(WebDriver d) {
+				return webDriver.getPageSource().contains('</body>')
+			};
+		})
+		return webDriver.getPageSource()
+	}
+	
+	
+	WebDriver driver = null;
+	private WebDriver getWebDriver() {
+		if (driver == null) {
+			def binary = new FirefoxBinary(new File(repoConfig.getFirefoxBinaryPath()))
+			def profile = new FirefoxProfile(new File(repoConfig.getFirefoxProfilePath()))
+			driver = new FirefoxDriver(binary, profile)
 		}
-		return reader
+		return driver
 	}
-	
-	@Override
-	protected String getScraperBaseURL() {
-		return repoConfig.getScraperBaseURL()
-	}
-
-	@Override
-	protected void doHandleFailure(def resp) {
-		logger.error("Remote request failure ${resp.toString()}")
-	}
-	
+		
 	static class EdmundsRepositoryConfiguration {
 		@Inject
 		ScraperConfigService configService
@@ -113,12 +121,17 @@ class EdmundsRepositoryImpl
 		String getScraperBaseURL() {
 			return configService.getApplicationParameter('edmundsBaseURL') as String
 		}
-		int getNumRetries() {
-			return configService.getApplicationParameter('numRetries') as int
+		String getMakeJSONSearchURL() {
+			return configService.getApplicationParameter('edmundsMakeSearchJSONURL') as String
 		}
-		int getFailureSleepMS() {
-			return configService.getApplicationParameter('failureSleepMS') as int
+		
+		String getFirefoxBinaryPath() {
+			return configService.getApplicationParameter('firefoxBinaryPath') as String
 		}
+		String getFirefoxProfilePath() {
+			return configService.getApplicationParameter('firefoxProfilePath') as String
+		}
+		
 	}
 
 }

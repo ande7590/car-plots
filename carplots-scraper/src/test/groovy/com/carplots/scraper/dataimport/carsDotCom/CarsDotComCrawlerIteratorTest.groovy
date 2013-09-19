@@ -1,6 +1,8 @@
 package com.carplots.scraper.dataimport.carsDotCom
 
 import javax.persistence.EntityManager;
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 
 import com.carplots.persistence.ScraperPersistenceInitializationService
 import com.carplots.scraper.dataimport.carsDotCom.CarsDotComCrawlerIterator.CarsDotComCrawlerData;
@@ -20,6 +22,9 @@ class CarsDotComCrawlerIteratorTest extends Specification {
 	
 	@Shared
 	CarsDotComCrawler crawler
+	
+	@Shared
+	CarsDotComRepository repo
 		
 	def setupSpec() {
 		Injector injector = Guice.createInjector(new CarsDotComTestModule())
@@ -27,7 +32,8 @@ class CarsDotComCrawlerIteratorTest extends Specification {
 			injector.getInstance(ScraperPersistenceInitializationService.class)
 		persistInitSvc.start()
 		entityManager = injector.getInstance(EntityManager.class)
-		crawler = injector.getInstance(CarsDotComCrawlerImpl.class)				
+		crawler = injector.getInstance(CarsDotComCrawlerImpl.class)			
+		repo = injector.getInstance(CarsDotComRepository.class)	
 	}
 	
 	def setup() {
@@ -44,7 +50,7 @@ class CarsDotComCrawlerIteratorTest extends Specification {
 		crawler != null
 	}
 	
-	def "test iterator"() {
+	/*def "test iterator"() {
 		when:
 		def items = []		
 		def num = 0
@@ -68,9 +74,28 @@ class CarsDotComCrawlerIteratorTest extends Specification {
 			itm.pages.size() > 0 && itm.search != null
 		} == [true] * items.size()
 		
-	}
+	}*/
 	
 	def "test cached repository"() {
+		final def MAKE_CHRYSLER = 20008
+		final def MODEL_PT_CRUISER = 21744
+		final def ZIPCODE_MPLS = 55423
+		final  def RADIUS_DEFAULT = 30				
+		
+		when: "test a valid request that we would expect to return results"
+		def requestHtml = repo.getSummaryPageHtml(
+			MAKE_CHRYSLER, MODEL_PT_CRUISER, ZIPCODE_MPLS, RADIUS_DEFAULT, 0) as String
+		then:
+		isSummaryPageCorrect(requestHtml)
 		
 	}
+	
+	static boolean isSummaryPageCorrect(String htmlData) {
+		//groovy regex is acting weird, eclipse may be using a buggy version because
+		//the groovyConsole works just fine when the same data and regex are used (the groovy version of the regex)
+		Pattern regex = Pattern.compile("\\s+chrysler\\s+pt\\s+cruiser", Pattern.DOTALL | Pattern.CASE_INSENSITIVE)
+		Matcher regexMatcher = regex.matcher(htmlData)
+		boolean result = regexMatcher.find()
+		return result
+	}	
 }

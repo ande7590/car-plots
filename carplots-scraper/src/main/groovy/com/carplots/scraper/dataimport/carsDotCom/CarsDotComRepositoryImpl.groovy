@@ -4,7 +4,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory;
 
 import com.carplots.scraper.ScraperConfigService;
-import com.carplots.scraper.dataimport.AbstractScraperRepository;
+import com.carplots.scraper.dataimport.AbstractHttpBuilderScraperRepository;
 import com.carplots.scraper.dataimport.carsDotCom.CarsDotComRepository.CarsDotComRepositoryFetchException
 import com.google.inject.Inject;
 
@@ -13,7 +13,7 @@ import static groovyx.net.http.ContentType.*
 import static groovyx.net.http.Method.*
 
 class CarsDotComRepositoryImpl
-	extends AbstractScraperRepository
+	extends AbstractHttpBuilderScraperRepository
 	implements CarsDotComRepository {
 	
 	private static final Logger logger = LoggerFactory.getLogger(CarsDotComRepositoryImpl.class)
