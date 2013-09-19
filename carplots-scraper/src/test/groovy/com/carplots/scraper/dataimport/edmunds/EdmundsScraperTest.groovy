@@ -23,7 +23,7 @@ class EdmundsScraperTest extends Specification {
 	@Shared
 	EdmundsRepository edmundsRepository
 		
-	def setupSpec() {		
+	def setupSpec() {
 		Injector injector = Guice.createInjector(new EdmundsTestModule())
 		ScraperPersistenceInitializationService persistInitSvc =
 			injector.getInstance(ScraperPersistenceInitializationService.class)
@@ -46,9 +46,16 @@ class EdmundsScraperTest extends Specification {
 		edmundsRepository != null
 	}
 	
-	def 'test get make'() {
-		expect:
-		true
+	def 'test get make repository'() {
+		when:
+		def requestData = edmundsRepository.getMakeData('acura') 
+		then:
+		requestData != null && requestData.size() > 10
+		
+		when:
+		requestData = edmundsRepository.getMakeModelData('acura', 'ilx')
+		then:
+		requestData != null && requestData.size() > 10
 	}
 	
 }

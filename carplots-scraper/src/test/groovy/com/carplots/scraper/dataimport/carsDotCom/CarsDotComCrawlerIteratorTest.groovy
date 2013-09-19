@@ -15,7 +15,7 @@ import spock.lang.Specification
 
 class CarsDotComCrawlerIteratorTest extends Specification {
 	
-	/*@Shared
+	@Shared
 	EntityManager entityManager
 	
 	@Shared
@@ -68,5 +68,9 @@ class CarsDotComCrawlerIteratorTest extends Specification {
 			itm.pages.size() > 0 && itm.search != null
 		} == [true] * items.size()
 		
-	}*/
+	}
+	
+	def "test cached repository"() {
+		
+	}
 }

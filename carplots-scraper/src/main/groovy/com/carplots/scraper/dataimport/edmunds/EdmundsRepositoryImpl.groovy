@@ -10,15 +10,16 @@ import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.sun.corba.se.impl.activation.ListServers;
 
-import groovyx.net.http.ContentType;
+import static groovyx.net.http.ContentType.*;
+import static groovyx.net.http.Method.*
 import groovyx.net.http.HTTPBuilder;
 import groovyx.net.http.Method.*;
 
-class EdmundRepositoryImpl 
-	extends AbstractScraperRepository 
+class EdmundsRepositoryImpl
+	extends AbstractScraperRepository
 	implements EdmundsRepository {
 	
-	private static final Logger logger = LoggerFactory.getLogger(EdmundRepositoryImpl.class)
+	private static final Logger logger = LoggerFactory.getLogger(EdmundsRepositoryImpl.class)
 	
 	private static String[] edmundsMakes = [
 		"acura", "alfa-romeo", "am-general", "aston-martin", "audi",
@@ -42,20 +43,48 @@ class EdmundRepositoryImpl
 		return edmundsMakes.clone();
 	}
 	
-	String getMakeMetaData(def makeName) 
-		throws EdmundsRepositoryFetchException {
+	@Override
+	public String getMakeData(String makeName)
+			throws EdmundsRepositoryFetchException {
 		
 		if (edmundsMakes.find { it == makeName } == null) {
 			throw new IllegalArgumentException('Make {$makeName} not found.')
 		}
 		
-		def http = getHttpBuilder()
-		def query = getScraperBaseURL() + makeName
+		def reader = getReader("/${makeName}")
 		
+		if (reader == null) {
+			final def message = "Unable to retrieve HTTP data for ${makeName}";
+			throw new EdmundsRepositoryFetchException(message)
+		}
+		
+		return reader.getText()
+	}
+
+	@Override
+	public String getMakeModelData(String makeName, String modelName)
+			throws EdmundsRepositoryFetchException {
+		
+		if (edmundsMakes.find { it == makeName } == null) {
+			throw new IllegalArgumentException('Make {$makeName} not found.')
+		}
+		
+		def reader = getReader("/${makeName}/${modelName}")
+		
+		if (reader == null) {
+			final def message = "Unable to retrieve HTTP data for ${makeName}, ${modelName}";
+			throw new EdmundsRepositoryFetchException(message)
+		}
+		
+		return reader.getText()
+	}
+		
+	private def getReader(def path) {
+		def http = getHttpBuilder()
 		StringReader reader = null
 		def retries = 0
 		while (reader == null && retries < repoConfig.getNumRetries()) {
-			reader = http.get(query:query, contentType: ContentType.TEXT)
+			reader = http.get(path:path, contentType: TEXT)
 			if (reader == null) {
 				logger.warn('Edmunds http request returned nothing, sleeping...')
 				try {
@@ -64,6 +93,7 @@ class EdmundRepositoryImpl
 				retries++
 			}
 		}
+		return reader
 	}
 	
 	@Override
@@ -72,8 +102,8 @@ class EdmundRepositoryImpl
 	}
 
 	@Override
-	protected void doHandleFailure(Object response) {
-		throw EdmundsRepositoryFetchException("Remote request failure ${resp.toString()}")
+	protected void doHandleFailure(def resp) {
+		logger.error("Remote request failure ${resp.toString()}")
 	}
 	
 	static class EdmundsRepositoryConfiguration {
@@ -90,4 +120,5 @@ class EdmundRepositoryImpl
 			return configService.getApplicationParameter('failureSleepMS') as int
 		}
 	}
+
 }
