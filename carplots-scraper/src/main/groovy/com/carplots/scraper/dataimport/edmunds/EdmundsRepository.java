@@ -6,6 +6,8 @@ public interface EdmundsRepository {
 
 	public String getMakeData(String makeName) 
 		throws EdmundsRepositoryFetchException;
+	
+	
 	public String getMakeModelData(String makeName, String modelName)
 		throws EdmundsRepositoryFetchException;
 	
