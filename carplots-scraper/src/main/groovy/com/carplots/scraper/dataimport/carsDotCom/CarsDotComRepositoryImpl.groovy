@@ -72,7 +72,7 @@ class CarsDotComRepositoryImpl implements CarsDotComRepository {
 		return reader.getText() 
 	}
 	
-	void doHandleFailure(def resp) {
+	protected void doHandleFailure(def resp) {
 		logger.error("Remote HTTP request failure ${resp.toString()}")
 	}	
 	
@@ -87,6 +87,7 @@ class CarsDotComRepositoryImpl implements CarsDotComRepository {
 			}
 		}
 	}
+
 	
 	static class CarsDotComRepositoryConfiguration {
 		@Inject

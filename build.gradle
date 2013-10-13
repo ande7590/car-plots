@@ -21,7 +21,7 @@ allprojects {
 		compile 'com.google.guava:guava:15.0'
 		
 		//spock & related		
-		testCompile 'org.codehaus.groovy:groovy-all:2.0.5'
+		testCompile 'org.codehaus.groovy:groovy-all:2.0.7'
 		testCompile 'org.spockframework:spock-guice:0.7-groovy-2.0'
 		testCompile 'org.spockframework:spock-core:0.7-groovy-2.0'
 	}

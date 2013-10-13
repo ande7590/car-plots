@@ -5,5 +5,10 @@ interface ScraperConfigService {
 	def getApplicationParameter(propertyName) throws ScraperConfigServicePropertyMissing;
 	void setApplicationParameter(propertyName, propertyValue)
 	
-	class ScraperConfigServicePropertyMissing extends Exception {}
+	public static class ScraperConfigServicePropertyMissing extends Exception {
+		public ScraperConfigServicePropertyMissing(String message) {
+			super(message)			
+		}
+		
+	}
 }

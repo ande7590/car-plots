@@ -1,33 +1,33 @@
 package com.carplots.scraper.dataimport.edmunds
 
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.firefox.FirefoxBinary;
-import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.firefox.FirefoxProfile;
-import org.openqa.selenium.support.ui.ExpectedCondition;
-import org.openqa.selenium.support.ui.WebDriverWait;
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory;
-
-import com.carplots.scraper.ScraperConfigService;
-import com.carplots.scraper.dataimport.AbstractHttpBuilderScraperRepository;
-import com.carplots.scraper.dataimport.edmunds.EdmundsRepository.EdmundsRepositoryFetchException;
-import com.google.common.collect.Lists;
-import com.google.inject.Inject;
-import com.sun.corba.se.impl.activation.ListServers;
-import com.sun.xml.internal.ws.api.streaming.XMLStreamReaderFactory.Default;
-
-import static groovyx.net.http.ContentType.*;
+import static groovyx.net.http.ContentType.*
 import static groovyx.net.http.Method.*
-import groovyx.net.http.HTTPBuilder;
-import groovyx.net.http.Method.*;
+import groovyx.net.http.HTTPBuilder
+import groovyx.net.http.Method.*
 
+import org.openqa.selenium.WebDriver
+import org.openqa.selenium.firefox.FirefoxBinary
+import org.openqa.selenium.firefox.FirefoxDriver
+import org.openqa.selenium.firefox.FirefoxProfile
+import org.openqa.selenium.support.ui.ExpectedCondition
+import org.openqa.selenium.support.ui.WebDriverWait
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+
+import com.carplots.scraper.ScraperConfigService
+import com.carplots.scraper.dataimport.edmunds.EdmundsRepository.EdmundsRepositoryFetchException
+import com.google.inject.Inject
+
+/*
+ * The majority of this is sort of throw-away since this
+ * import should only happen once every couple years or so. 
+ */
 class EdmundsRepositoryImpl
 	implements EdmundsRepository {
 	
 	private static final Logger logger = LoggerFactory.getLogger(EdmundsRepositoryImpl.class)
 	
-	private static String[] edmundsMakes = [
+	public static String[] edmundsMakes = [
 		"acura", "alfa-romeo", "am-general", "aston-martin", "audi",
 		"bentley", "bmw", "bugatti", "buick", "cadillac", "chevrolet",
 		"chrysler", "daewoo", "dodge", "eagle", "ferrari", "fiat",
@@ -40,6 +40,20 @@ class EdmundsRepositoryImpl
 		"scion", "smart", "spyker", "subaru", "suzuki", "tesla",
 		"toyota", "volkswagen", "volvo"
 	]
+	
+	public static String[] edmundsMakesJSON = [
+		"Acura", "Alfa Romeo", "AM General", "Aston Martin", "Audi", "Bentley",
+		"BMW", "Bugatti", "Buick", "Cadillac", "Chevrolet", "Chrysler",
+		"Daewoo", "Dodge", "Eagle", "Ferrari", "FIAT", "Fisker",
+		"Ford", "Geo", "GMC", "Honda", "HUMMER", "Hyundai",
+		"Infiniti", "Isuzu", "Jaguar", "Jeep", "Kia", "Lamborghini",
+		"Land Rover", "Lexus", "Lincoln", "Lotus", "Maserati", "Maybach",
+		"Mazda", "McLaren", "Mercedes-Benz", "Mercury", "MINI", "Mitsubishi",
+		"Nissan", "Oldsmobile", "Panoz", "Plymouth", "Pontiac", "Porsche",
+		"Ram", "Rolls-Royce", "Saab", "Saturn", "Scion", "smart",
+		"Spyker", "Subaru", "Suzuki", "Tesla", "Toyota", "Volkswagen",
+		"Volvo"]
+
 	
 	
 	@Inject
@@ -85,12 +99,42 @@ class EdmundsRepositoryImpl
 		return html
 	}
 			
-	private def getMakeJSON(def makeName) {
+	@Override
+	public Object getMakeJSON(String makeName) {
 		
-		def http = new HTTPBuilder(repoConfig.getMakeJSONSearchURL())
-		def query = ''
+		if (!edmundsMakesJSON.find { it.equals(makeName)} ) {
+			throw new IllegalArgumentException("bad makeName argument: ${makeName}")
+		}
 		
+		HTTPBuilder http = new HTTPBuilder(repoConfig.getMakeJSONSearchURL() + java.net.URLEncoder.encode(makeName))
+		http.handler.failure = { resp ->
+			doHandleFailure(resp)
+		}
+		
+		def jsonResult = null
+		def retries = 0		
+		while (jsonResult == null && retries < repoConfig.getNumRetries()) {
+			jsonResult = http.get(contentType: JSON)
+			if (jsonResult == null) {
+				logger.warn('Edmunds JSON request returned nothing, sleeping...')
+				try {
+					Thread.sleep(repoConfig.getFailureSleepMS())
+				} catch (Exception ex) {} 							
+				retries++
+			}						
+		}
+		
+		if (jsonResult == null) {
+			logger.error('Unable to retrieve HTTP data, crawler aborting.')
+			throw new EdmundsRepositoryFetchException()
+		} 
+				
+		return jsonResult
 	}
+	
+	protected void doHandleFailure(def resp) {
+		logger.error("Remote HTTP request failure ${resp.toString()}")
+	}	
 		
 	private def getPageHtml(def path) {
 		def webDriver = getWebDriver()
@@ -114,7 +158,7 @@ class EdmundsRepositoryImpl
 		return driver
 	}
 		
-	static class EdmundsRepositoryConfiguration {
+	public static class EdmundsRepositoryConfiguration {
 		@Inject
 		ScraperConfigService configService
 
@@ -122,7 +166,11 @@ class EdmundsRepositoryImpl
 			return configService.getApplicationParameter('edmundsBaseURL') as String
 		}
 		String getMakeJSONSearchURL() {
-			return configService.getApplicationParameter('edmundsMakeSearchJSONURL') as String
+			return configService.getApplicationParameter('edmundsFindMakeSearchJSONURL') as String
+		}
+		
+		int getNumRetries() {
+			return configService.getApplicationParameter('numRetries') as int
 		}
 		
 		String getFirefoxBinaryPath() {

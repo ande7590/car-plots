@@ -44,7 +44,7 @@ class ScraperConfigServiceImpl implements ScraperConfigService {
 	def getApplicationParameter(propertyName) throws ScraperConfigServicePropertyMissing {
 		def propVal = null
 		if ((propVal = get(propertyName)).equals(missingPropertyValue)) {
-			throw new ScraperConfigServicePropertyMissing("Config property missing '${propertyName}'")
+			throw new ScraperConfigServicePropertyMissing("Config property missing '${propertyName}'" as String)
 		}
 		return propVal
 	}

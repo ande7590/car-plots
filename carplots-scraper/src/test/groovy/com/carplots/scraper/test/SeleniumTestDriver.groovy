@@ -15,13 +15,6 @@ class SeleniumTestDriver {
 		WebDriver driver = new FirefoxDriver(binary, profile)
 		driver.get('http://www.edmunds.com/toyota')
 		
-		def scrollFunc= '''			
-			function fzt52_scrollFunc() {
-				var body document.getElementsTagName(
-			}
-		'''
-		
-		//Thread.sleep(5000)
 		
 		(new WebDriverWait(driver, 10)).until(new ExpectedCondition<Boolean>() {
 			public Boolean apply(WebDriver d) {
