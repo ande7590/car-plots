@@ -3,16 +3,21 @@ package com.carplots.scraper.dataimport.carsDotCom
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 import org.apache.commons.lang.NotImplementedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.carplots.persistence.scraper.dao.ScraperBatchSearchDao;
 import com.carplots.persistence.scraper.entities.MakeModel
 import com.carplots.persistence.scraper.entities.ScraperBatch;
 import com.carplots.persistence.scraper.entities.Search;
+import com.carplots.scraper.dataimport.carsDotCom.CarsDotComRepository.CarsDotComRepositoryFetchException;
 import com.carplots.service.scraper.CarplotsScraperService;
 import com.google.inject.Inject;
 
 class CarsDotComCrawlerIterator 
 	implements Iterator<CarsDotComCrawlerData> {
+		
+	private static final Logger logger = LoggerFactory.getLogger(CarsDotComCrawlerIterator.class)
 		
 	private final CarsDotComRepository carsDotComRepo
 	private final CarplotsScraperService scraperService
@@ -44,13 +49,18 @@ class CarsDotComCrawlerIterator
 				def (makeId, modelId, radius, zipcode) = [
 					 mm.makeId, mm.modelId, search.radius,
 					 search.getLocation().getZipcode()]
-				def pageHtml = carsDotComRepo.getSummaryPageHtml(makeId, modelId, 
-					zipcode, radius, pageNum)
-				pages.add(pageHtml)
-				//update the page count with data from first fetch
-				if (pageNum == 1) {
-					totalPages = getTotalPages(pageHtml)
-				}				
+				try {
+					def pageHtml = carsDotComRepo.getSummaryPageHtml(makeId, modelId,
+						zipcode, radius, pageNum)
+					pages.add(pageHtml)
+					//update the page count with data from first fetch
+					if (pageNum == 1) {
+						totalPages = getTotalPages(pageHtml)
+					}
+				} catch (CarsDotComRepositoryFetchException ex ) {
+					logger.warn("Unable to fetch make: ${makeId}, model: ${modelId}, zipcode: ${zipcode}")
+					break;
+				}
 			}
 			next = new CarsDotComCrawlerData(search, pages)
 		}
