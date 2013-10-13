@@ -18,6 +18,12 @@ dependencies {
 	compile 'org.seleniumhq.selenium:selenium-java:2.35.0'
 }
 
+
+//Remove the index.list so that the application jar can find the 'scraper-config.jar'
+fatJarPrepareFiles.doLast  {
+		delete "$stageDir/META-INF/INDEX.LIST"
+}
+//Tweak the jar to include the config jar on the classpath
 fatJar {
 	manifest {
 		attributes(
