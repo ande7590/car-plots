@@ -11,5 +11,9 @@ public interface EdmundsRepository {
 	public Object getMakeJSON(String makeName)
 		throws EdmundsRepositoryFetchException ;
 	
-	static class EdmundsRepositoryFetchException extends Exception {};
+	public static class EdmundsRepositoryFetchException extends Throwable {
+		public EdmundsRepositoryFetchException(String msg, Throwable ex) {
+			super(msg, ex);
+		}			
+	}
 }

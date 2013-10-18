@@ -120,26 +120,38 @@ class EdmundsRepositoryImpl
 				if (style != null) {
 					queryURL += "?style=${style}"
 				}
-				webDriver.get(queryURL)
-				
-				(new WebDriverWait(driver, 10)).until(new ExpectedCondition<Boolean>() {
-					public Boolean apply(WebDriver d) {
-						return d.getPageSource().contains('</body>')
-					};
-				})
+				webDriver.get(queryURL)							
 				
 				JavascriptExecutor js = (JavascriptExecutor) webDriver
 				
 				for (int second = 0;; second++) {
-					if(second >= 30){
+					if(second >= 50){
 						break;
 					}
-						js.executeScript("window.scrollBy(0,400)", "");
+						js.executeScript("window.scrollBy(0,600)", "");
 						Thread.sleep(100);
 				}
 				
+				try {
+					(new WebDriverWait(driver, 10)).until(new ExpectedCondition<Boolean>() {
+						public Boolean apply(WebDriver d) {
+							String pageSource = d.getPageSource()
+							return pageSource.contains('specs-diff') &&
+								pageSource.contains("</body>") &&
+								pageSource.contains("specs-pod")
+						};
+					})
+				} catch (Exception ex) {
+					logger.warn("error, skipping ${makeName}, ${modelName}, ${year} ", ex)
+					continue
+				}
+				
+				
 				if (style == null) {									
-					def stylesListJSON = js.executeScript('''						
+				
+					def stylesListJSON = null
+					try {
+						stylesListJSON = js.executeScript('''
 							var specsSelectOptions = document.getElementById("specs-diff").children[0].options
 							var results = new Object()
 							for (var i=0;i<specsSelectOptions.length;i++) {
@@ -149,9 +161,14 @@ class EdmundsRepositoryImpl
 							    results[value] = text
 							}
 							return JSON.stringify(results)																																
-					''');
+						''');
+					} catch (Exception ex) {
+						logger.warn("error, skipping ${makeName}, ${modelName}, ${year} ", ex)
+						return null
+					}
+																
 					if (stylesListJSON == null) {
-						throw new EdmundsRepositoryFetchException()
+						throw new EdmundsRepositoryFetchException("Can't parse selection objects: ", null)
 					}
 					
 					def stylesListData = jsSlurper.parseText(stylesListJSON)					
@@ -165,37 +182,42 @@ class EdmundsRepositoryImpl
 					style = js.executeScript('''return document.getElementById("specs-diff").getElementsByTagName("select")[0].value''')
 				} 
 				
-				
-				def styleDataJSON = js.executeScript('''
-					var dataTableCandidates = document.getElementById("specs-pod").getElementsByTagName("div")
-					var dataTables = []
-					for (var i=0; i<dataTableCandidates.length; i++) {
-						var elem = dataTableCandidates[i]
-						if (elem.className.indexOf("data-table") >= 0) {
-							dataTables.push(elem)
+				def styleDataJSON = null
+				try {
+					styleDataJSON = js.executeScript('''
+						var dataTableCandidates = document.getElementById("specs-pod").getElementsByTagName("div")
+						var dataTables = []
+						for (var i=0; i<dataTableCandidates.length; i++) {
+							var elem = dataTableCandidates[i]
+							if (elem.className.indexOf("data-table") >= 0) {
+								dataTables.push(elem)
+							}
 						}
-					}
-					var data = {}
-					for (var i=0; i<dataTables.length; i++) {
-						var dt = dataTables[0];
-						var items = dt.getElementsByTagName('li')
-						for (var j=0; j<items.length; j++) {
-							var itm = items[j]
-							var attrName = itm.getElementsByTagName('span')[0].innerHTML
-							var attrVal = itm.getElementsByTagName('em')[0].innerHTML
-							data[attrName] = attrVal
+						var data = {}
+						for (var i=0; i<dataTables.length; i++) {
+							var dt = dataTables[0];
+							var items = dt.getElementsByTagName('li')
+							for (var j=0; j<items.length; j++) {
+								var itm = items[j]
+								var attrName = itm.getElementsByTagName('span')[0].innerHTML
+								var attrVal = itm.getElementsByTagName('em')[0].innerHTML
+								data[attrName] = attrVal
+							}
 						}
-					}
-					return JSON.stringify(data)
-				''')
-				
+						return JSON.stringify(data)
+					''')			
+				} catch (Exception ex) {
+					logger.warn("error, skipping ${makeName}, ${modelName}, ${year} ", ex)
+					continue
+				}
+					
 				
 				def styleAllData = jsSlurper.parseText(styleDataJSON)
 				stylesCollectedDataMap[style] = stylesCollectedDataMap[style] + styleAllData  
 			}
 			
 		} catch (Exception ex) {
-			throw new EdmundsRepositoryFetchException();
+			logger.error("Fetch Exception: " + ex)
 		}
 		
 		return stylesCollectedDataMap

@@ -36,7 +36,9 @@ class EdmundsRepositoryCachedImpl
 		def result = getCachedEntry(CACHE_KEY_makeModelYearHTML, makeName, modelName, year)
 		if (result == null || result == "") {
 			result = super.getMakeModelYearJSON(makeName, modelName, year)
-			setCachedEntry(CACHE_KEY_makeModelYearHTML, makeName, modelName, year, (new JSONObject(result)).toString() )
+			if (result != null) {
+				setCachedEntry(CACHE_KEY_makeModelYearHTML, makeName, modelName, year, (new JSONObject(result)).toString() )
+			}
 		} else {
 			result = (new JsonSlurper()).parseText(result)
 		}
