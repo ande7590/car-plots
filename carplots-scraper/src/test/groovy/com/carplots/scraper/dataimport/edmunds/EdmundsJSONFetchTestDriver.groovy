@@ -24,7 +24,8 @@ class EdmundsJSONFetchTestDriver {
 		
 		EdmundsRepository repo = injector.getInstance(EdmundsRepository.class)
 		StringBuilder sb = new StringBuilder()
-				
+		
+		def importKey = 0
 		EdmundsRepositoryImpl.edmundsMakesJSON.each { makeName ->
 			def jsonData = repo.getMakeJSON(makeName)
 			def models = jsonData["models"] 
@@ -43,18 +44,29 @@ class EdmundsJSONFetchTestDriver {
 					def years = modelData['years']
 					bodyTypes.each { bodyType ->
 						bodyType = cleanStr(bodyType)
-						years["USED"].each { yr ->
-							sb.append("INSERT INTO Edmunds.Imported (MakeName, ModelName, Year, SubModelDesc, EdmundsLink, BodyDesc) VALUES ('${makeName}', '${modelName}', '${yr}', '${submodel}', '${link}', '${bodyType}');\n");
+						years["USED"].each { yr ->							
+							sb.append("INSERT INTO Edmunds.Imported (ImportKey, MakeName, ModelName, Year, SubModelDesc, EdmundsLink, BodyDesc) VALUES (${importKey}, '${makeName}', '${modelName}', '${yr}', '${submodel}', '${link}', '${bodyType}');\n");
+							try {
+								def linkParts = link.split('/')
+								def makeData = repo.getMakeModelYearJSON(linkParts[1], linkParts[2], "$yr" as String)								
+							} catch (Exception ex) {
+								logger.error('Failed to fetch meta data', ex)
+							} 
+							importKey++
 						}
 					}
 				} catch (Exception ex) {
-					def foo = 'bar'
+					logger.error('Edmunds fetch error', ex)
 				}				
 			}
 		}
 		
-		(new File('/home/mike/edmunds_sql.sql')).append(sb.toString())
-			
+		def makeDataOutputSQL = new File('/home/mike/.devTest/edmunds_make_data.sql')
+		if (makeDataOutputSQL.exists()) {
+			makeDataOutputSQL.delete()			
+		}
+		makeDataOutputSQL.append(sb.toString())		
+		def metaDataOutputSQL = new File('/home/mike/.devTest/edmunds_meta_data.sql')	
 	}
 	
 	static main(args) {

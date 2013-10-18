@@ -2,9 +2,11 @@ package com.carplots.scraper.dataimport.edmunds
 
 import static groovyx.net.http.ContentType.*
 import static groovyx.net.http.Method.*
+import groovy.json.JsonSlurper;
 import groovyx.net.http.HTTPBuilder
 import groovyx.net.http.Method.*
 
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.firefox.FirefoxBinary
 import org.openqa.selenium.firefox.FirefoxDriver
@@ -16,11 +18,12 @@ import org.slf4j.LoggerFactory
 
 import com.carplots.scraper.ScraperConfigService
 import com.carplots.scraper.dataimport.edmunds.EdmundsRepository.EdmundsRepositoryFetchException
+
 import com.google.inject.Inject
 
 /*
  * The majority of this is sort of throw-away since this
- * import should only happen once every couple years or so. 
+ * import should only happen once every couple years or so.
  */
 class EdmundsRepositoryImpl
 	implements EdmundsRepository {
@@ -53,50 +56,12 @@ class EdmundsRepositoryImpl
 		"Ram", "Rolls-Royce", "Saab", "Saturn", "Scion", "smart",
 		"Spyker", "Subaru", "Suzuki", "Tesla", "Toyota", "Volkswagen",
 		"Volvo"]
-
-	
 	
 	@Inject
 	EdmundsRepositoryConfiguration repoConfig
 	
 	public String[] getMakes() {
 		return edmundsMakes.clone();
-	}
-	
-	@Override
-	public String getMakeData(String makeName)
-			throws EdmundsRepositoryFetchException {
-		
-		if (edmundsMakes.find { it == makeName } == null) {
-			throw new IllegalArgumentException('Make {$makeName} not found.')
-		}
-		
-		def html = getPageHtml("/${makeName}")
-		
-		if (html == null || html.trim().isEmpty()) {
-			final def message = "Unable to retrieve HTTP data for ${makeName}";
-			throw new EdmundsRepositoryFetchException(message)
-		}
-		
-		return html
-	}
-
-	@Override
-	public String getMakeModelData(String makeName, String modelName)
-			throws EdmundsRepositoryFetchException {
-		
-		if (edmundsMakes.find { it == makeName } == null) {
-			throw new IllegalArgumentException('Make {$makeName} not found.')
-		}
-		
-		String html = getPageHtml("/${makeName}/${modelName}")
-		
-		if (html == null || html.trim().isEmpty()) {
-			final def message = "Unable to retrieve HTTP data for ${makeName}, ${modelName}";
-			throw new EdmundsRepositoryFetchException(message)
-		}
-		
-		return html
 	}
 			
 	@Override
@@ -112,41 +77,133 @@ class EdmundsRepositoryImpl
 		}
 		
 		def jsonResult = null
-		def retries = 0		
+		def retries = 0
 		while (jsonResult == null && retries < repoConfig.getNumRetries()) {
 			jsonResult = http.get(contentType: JSON)
 			if (jsonResult == null) {
 				logger.warn('Edmunds JSON request returned nothing, sleeping...')
 				try {
 					Thread.sleep(repoConfig.getFailureSleepMS())
-				} catch (Exception ex) {} 							
+				} catch (Exception ex) {}
 				retries++
-			}						
+			}
 		}
 		
 		if (jsonResult == null) {
 			logger.error('Unable to retrieve HTTP data, crawler aborting.')
 			throw new EdmundsRepositoryFetchException()
-		} 
+		}
 				
 		return jsonResult
 	}
 	
-	protected void doHandleFailure(def resp) {
-		logger.error("Remote HTTP request failure ${resp.toString()}")
-	}	
+	@Override
+	public Object getMakeModelYearJSON(String makeName, String modelName,
+			String year) {
 		
-	private def getPageHtml(def path) {
-		def webDriver = getWebDriver()
-		webDriver.get(repoConfig.getScraperBaseURL() + path)
-		(new WebDriverWait(webDriver, 10)).until(new ExpectedCondition<Boolean>() {
-			public Boolean apply(WebDriver d) {
-				return webDriver.getPageSource().contains('</body>')
-			};
-		})
-		return webDriver.getPageSource()
+		WebDriver webDriver = getWebDriver()
+		JsonSlurper jsSlurper = new JsonSlurper()
+		
+		def stylesToProcess = [null]					
+		def stylesCollectedDataMap = [:]
+		
+		try {
+			while (stylesToProcess.size() > 0) {
+				
+				def style = stylesToProcess.pop()
+				def queryURL = [
+					repoConfig.getScraperBaseURL(),
+					makeName.toLowerCase(),
+					modelName.toLowerCase(),
+					year].join('/')
+				
+				if (style != null) {
+					queryURL += "?style=${style}"
+				}
+				webDriver.get(queryURL)
+				
+				(new WebDriverWait(driver, 10)).until(new ExpectedCondition<Boolean>() {
+					public Boolean apply(WebDriver d) {
+						return d.getPageSource().contains('</body>')
+					};
+				})
+				
+				JavascriptExecutor js = (JavascriptExecutor) webDriver
+				
+				for (int second = 0;; second++) {
+					if(second >= 30){
+						break;
+					}
+						js.executeScript("window.scrollBy(0,400)", "");
+						Thread.sleep(100);
+				}
+				
+				if (style == null) {									
+					def stylesListJSON = js.executeScript('''						
+							var specsSelectOptions = document.getElementById("specs-diff").children[0].options
+							var results = new Object()
+							for (var i=0;i<specsSelectOptions.length;i++) {
+							    var opt = specsSelectOptions[i]
+							    var text = opt.text
+							    var value = opt.value
+							    results[value] = text
+							}
+							return JSON.stringify(results)																																
+					''');
+					if (stylesListJSON == null) {
+						throw new EdmundsRepositoryFetchException()
+					}
+					
+					def stylesListData = jsSlurper.parseText(stylesListJSON)					
+					for (String key : stylesListData.keySet()) {
+						stylesToProcess << key
+						stylesCollectedDataMap[key] = [
+							desc: stylesListData[key]
+						]
+					}
+					
+					style = js.executeScript('''return document.getElementById("specs-diff").getElementsByTagName("select")[0].value''')
+				} 
+				
+				
+				def styleDataJSON = js.executeScript('''
+					var dataTableCandidates = document.getElementById("specs-pod").getElementsByTagName("div")
+					var dataTables = []
+					for (var i=0; i<dataTableCandidates.length; i++) {
+						var elem = dataTableCandidates[i]
+						if (elem.className.indexOf("data-table") >= 0) {
+							dataTables.push(elem)
+						}
+					}
+					var data = {}
+					for (var i=0; i<dataTables.length; i++) {
+						var dt = dataTables[0];
+						var items = dt.getElementsByTagName('li')
+						for (var j=0; j<items.length; j++) {
+							var itm = items[j]
+							var attrName = itm.getElementsByTagName('span')[0].innerHTML
+							var attrVal = itm.getElementsByTagName('em')[0].innerHTML
+							data[attrName] = attrVal
+						}
+					}
+					return JSON.stringify(data)
+				''')
+				
+				
+				def styleAllData = jsSlurper.parseText(styleDataJSON)
+				stylesCollectedDataMap[style] = stylesCollectedDataMap[style] + styleAllData  
+			}
+			
+		} catch (Exception ex) {
+			throw new EdmundsRepositoryFetchException();
+		}
+		
+		return stylesCollectedDataMap
 	}
 	
+	protected void doHandleFailure(def resp) {
+		logger.error("Remote HTTP request failure ${resp.toString()}")
+	}
 	
 	WebDriver driver = null;
 	private WebDriver getWebDriver() {
@@ -180,6 +237,12 @@ class EdmundsRepositoryImpl
 			return configService.getApplicationParameter('firefoxProfilePath') as String
 		}
 		
+		String getFireFoxBinaryLocation() {
+			return configService.getApplicationParameter('seleniumFireFoxBinaryLocation')
+		}
+		String getFireFoxProfileLocation() {
+			return configService.getApplicationParameter('seleniumFireFoxProfileLocation')
+		}
 	}
-
+	
 }

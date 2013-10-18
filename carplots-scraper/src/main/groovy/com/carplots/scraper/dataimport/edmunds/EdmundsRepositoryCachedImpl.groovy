@@ -5,35 +5,47 @@ import com.carplots.scraper.cache.Cache;
 import com.carplots.scraper.cache.ZipFileCache
 import com.carplots.scraper.dataimport.edmunds.EdmundsRepository.EdmundsRepositoryFetchException
 import com.google.inject.Inject;
+import groovy.json.JsonSlurper
+import org.json.JSONObject
+
 
 class EdmundsRepositoryCachedImpl
 	extends EdmundsRepositoryImpl {
 
 	@Inject
 	EdmundsRepositoryCachedConfig cachedRepositoryConfig
+
+	private static String CACHE_KEY_makeJSON = 'makeJson'
+	private static String CACHE_KEY_makeModelYearHTML = 'makeModelYearHtml'
 	
 	@Override
-	public String getMakeModelData(String makeName, String modelName)
-			throws EdmundsRepositoryFetchException {
+	public def getMakeJSON(String makeName) {
 		
-		def pageHtml = getCachedEntry(makeName, modelName)
-		if (pageHtml == null) {
-			pageHtml = super.getMakeModelData(makeName, modelName)
-			setCachedEntry(makeName, modelName, pageHtml)
+		def result = getCachedEntry(CACHE_KEY_makeJSON, makeName)
+		if (result == null || result == "") {
+			result = super.getMakeJSON(makeName)
+			setCachedEntry(CACHE_KEY_makeJSON, makeName, (new JSONObject(result)).toString() )
+		} else {
+			result = (new JsonSlurper()).parseText(result)
 		}
-				
-		return pageHtml
-	}
-			
-	@Override
-	public String getMakeData(String makeName)
-			throws EdmundsRepositoryFetchException {
-		// TODO Auto-generated method stub
-		return super.getMakeData(makeName);
+		return result
 	}
 	
-	private String getCachedEntry(makeName, modelName) {
-		def entryName = "${makeName}_${modelName}"
+	@Override
+	public def getMakeModelYearJSON(String makeName, String modelName, String year) {
+		def result = getCachedEntry(CACHE_KEY_makeModelYearHTML, makeName, modelName, year)
+		if (result == null || result == "") {
+			result = super.getMakeModelYearJSON(makeName, modelName, year)
+			setCachedEntry(CACHE_KEY_makeModelYearHTML, makeName, modelName, year, (new JSONObject(result)).toString() )
+		} else {
+			result = (new JsonSlurper()).parseText(result)
+		}
+		return result
+	}
+	
+	private String getCachedEntry(String... args) {				
+		def foo = 'bar'
+		def entryName = getKey(args)
 		def entry = null
 		synchronized (cacheMutex) {
 			entry = getCache().getCachedEntry(entryName)
@@ -41,11 +53,18 @@ class EdmundsRepositoryCachedImpl
 		return entry
 	}
 	
-	private void setCachedEntry(makeName, modelName, pageHtml) {
-		def entryName = "${makeName}_${modelName}"
+	private void setCachedEntry(String... args) {
+		def entryName = getKey( *(args[0..args.size()-2]))
+		def entry = args[-1]
 		synchronized (cacheMutex) {
-			getCache().setCachedEntry(entryName, pageHtml)
+			getCache().setCachedEntry(entryName, entry)
 		}
+	}
+	
+	private String getKey(String... args) {
+		return args.collect {
+			it.replace('_', '-')
+		}.join('_')
 	}
 			
 	private final Object cacheMutex = new Object()
@@ -61,11 +80,12 @@ class EdmundsRepositoryCachedImpl
 		return cache
 	}
 				
-	static class EdmundsRepositoryCachedConfig {
+	public static class EdmundsRepositoryCachedConfig {
 		@Inject
 		ScraperConfigService configService
 		String getCacheDir() {
 			return configService.getApplicationParameter('edmundsRepositoryCacheDirectory')
 		}
+		
 	}
 }
