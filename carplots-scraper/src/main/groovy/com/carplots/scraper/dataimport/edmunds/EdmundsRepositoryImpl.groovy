@@ -97,9 +97,28 @@ class EdmundsRepositoryImpl
 		return jsonResult
 	}
 	
-	@Override
+	private final static def maxTries = 3
+	@Override		
 	public Object getMakeModelYearJSON(String makeName, String modelName,
 			String year) {
+			
+			def numTries = 0
+			def retVal = null
+			while (numTries < maxTries && retVal == null) {
+				retVal = doGetMakeModelYearJSON(makeName, modelName,
+					year, 75 + 20*numTries)
+				numTries++
+			}
+			
+			if (retVal == null) {
+				logger.warn("error fetching ${makeName}, ${modelName}, ${year} ")
+			}
+			
+			return retVal
+	}
+	
+	private Object doGetMakeModelYearJSON(String makeName, String modelName,
+			String year, waitTime) {
 		
 		WebDriver webDriver = getWebDriver()
 		JsonSlurper jsSlurper = new JsonSlurper()
@@ -125,7 +144,7 @@ class EdmundsRepositoryImpl
 				JavascriptExecutor js = (JavascriptExecutor) webDriver
 				
 				for (int second = 0;; second++) {
-					if(second >= 50){
+					if(second >= waitTime){
 						break;
 					}
 						js.executeScript("window.scrollBy(0,600)", "");
@@ -133,7 +152,7 @@ class EdmundsRepositoryImpl
 				}
 				
 				try {
-					(new WebDriverWait(driver, 10)).until(new ExpectedCondition<Boolean>() {
+					(new WebDriverWait(webDriver, 10)).until(new ExpectedCondition<Boolean>() {
 						public Boolean apply(WebDriver d) {
 							String pageSource = d.getPageSource()
 							return pageSource.contains('specs-diff') &&
@@ -163,7 +182,7 @@ class EdmundsRepositoryImpl
 							return JSON.stringify(results)																																
 						''');
 					} catch (Exception ex) {
-						logger.warn("error, skipping ${makeName}, ${modelName}, ${year} ", ex)
+						logger.warn("error fetching ${makeName}, ${modelName}, ${year} ", ex)
 						return null
 					}
 																
@@ -227,14 +246,28 @@ class EdmundsRepositoryImpl
 		logger.error("Remote HTTP request failure ${resp.toString()}")
 	}
 	
-	WebDriver driver = null;
+	
+	private volatile ThreadLocal<WebDriver> webDriverThreadLocal
+	private final Object threadLocalLock = new Object()
 	private WebDriver getWebDriver() {
-		if (driver == null) {
-			def binary = new FirefoxBinary(new File(repoConfig.getFirefoxBinaryPath()))
-			def profile = new FirefoxProfile(new File(repoConfig.getFirefoxProfilePath()))
-			driver = new FirefoxDriver(binary, profile)
+		if (webDriverThreadLocal == null) {
+			synchronized (threadLocalLock) {
+				if (webDriverThreadLocal == null) {
+					webDriverThreadLocal = getWebDriverThreadLocal(
+						new FirefoxBinary(new File(repoConfig.getFirefoxBinaryPath())),
+						new FirefoxProfile(new File(repoConfig.getFirefoxProfilePath())))
+				}
+			}
 		}
-		return driver
+		return webDriverThreadLocal.get()
+	}
+	
+	private def getWebDriverThreadLocal(final FirefoxBinary binary, final FirefoxProfile profile) {
+		return new ThreadLocal<WebDriver>() {
+			protected def initialValue() {
+				return new FirefoxDriver(binary, profile)
+			}
+		}
 	}
 		
 	public static class EdmundsRepositoryConfiguration {

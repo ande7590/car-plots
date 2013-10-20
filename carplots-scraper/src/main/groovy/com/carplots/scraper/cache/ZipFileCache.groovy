@@ -18,12 +18,18 @@ public class ZipFileCache
 		def entryPath = getEntryPath(entryName)
 		def cacheFile = new File(entryPath)
 		if (cacheFile.exists()) {
-			def is = new FileInputStream(entryPath)
-			def zipIs = new ZipInputStream(is)
-			zipIs.getNextEntry()
-			entry = new String(org.apache.commons.io.IOUtils.toByteArray(zipIs),
-				"UTF-8")
-		}
+			def is, zipIs
+			try {
+				is = new FileInputStream(entryPath)
+				zipIs = new ZipInputStream(is)
+				zipIs.getNextEntry()
+				entry = new String(org.apache.commons.io.IOUtils.toByteArray(zipIs),
+					"UTF-8")				
+			} finally {
+				zipIs.close()				
+				is.close()
+			}
+		}	
 		return entry
 	}
 	
@@ -34,7 +40,7 @@ public class ZipFileCache
 		try {
 			def zipEntry = new ZipEntry(entryName)
 			zipOs.putNextEntry(zipEntry)
-			zipOs.write(entry.getBytes("UTF-8"))
+			zipOs.write(entry.getBytes("UTF-8"))			
 		}
 		finally {
 			zipOs.close()

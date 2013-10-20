@@ -34,7 +34,7 @@ class EdmundsRepositoryCachedImpl
 	@Override
 	public def getMakeModelYearJSON(String makeName, String modelName, String year) {
 		def result = getCachedEntry(CACHE_KEY_makeModelYearHTML, makeName, modelName, year)
-		if (result == null || result == "") {
+		if (result == null || result == "" || result == "{}") {
 			result = super.getMakeModelYearJSON(makeName, modelName, year)
 			if (result != null) {
 				setCachedEntry(CACHE_KEY_makeModelYearHTML, makeName, modelName, year, (new JSONObject(result)).toString() )
@@ -44,7 +44,7 @@ class EdmundsRepositoryCachedImpl
 		}
 		return result
 	}
-	
+		
 	private String getCachedEntry(String... args) {				
 		def foo = 'bar'
 		def entryName = getKey(args)
@@ -70,10 +70,11 @@ class EdmundsRepositoryCachedImpl
 	}
 			
 	private final Object cacheMutex = new Object()
+	private final Object cacheCreationMutex = new Object()
 	private volatile Cache<String> cache
 	protected Cache<String> getCache() {
 		if (cache == null) {
-			synchronized (cacheMutex) {
+			synchronized (cacheCreationMutex) {
 				if (cache == null) {
 					cache = new ZipFileCache(cachedRepositoryConfig.getCacheDir())
 				}
