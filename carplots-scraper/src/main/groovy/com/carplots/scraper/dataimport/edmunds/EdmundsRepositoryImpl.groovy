@@ -104,9 +104,14 @@ class EdmundsRepositoryImpl
 			
 			def numTries = 0
 			def retVal = null
+			
+			//scraping pages is hap-hazard due to our reliance on FireFox, 
+			//and the tons of Edmunds scripts that need to run in order to 
+			//fully load a page.  If we fail attempt to do it again but wait a
+			//little long (and scroll down farther).
 			while (numTries < maxTries && retVal == null) {
 				retVal = doGetMakeModelYearJSON(makeName, modelName,
-					year, 75 + 20*numTries)
+					year, 30 + 20*numTries)
 				numTries++
 			}
 			
@@ -118,11 +123,17 @@ class EdmundsRepositoryImpl
 	}
 	
 	private Object doGetMakeModelYearJSON(String makeName, String modelName,
-			String year, waitTime) {
+			String year, numTimesToScrollAndWait) {
 		
+		//edmunds lazy loads the page as you scroll down (via JS), so
+		//we cannot issue a simple HTTP request, we need to do a scrape
+		//using a full-blown web browser
 		WebDriver webDriver = getWebDriver()
 		JsonSlurper jsSlurper = new JsonSlurper()
 		
+		//"style" is an edmunds key corresponding to a make, model, year, trim, and engine.
+		//We'll need to fetch them so we can query all the data for this car.  Assume NULL
+		//initially since we don't know what the style is until the page loads
 		def stylesToProcess = [null]					
 		def stylesCollectedDataMap = [:]
 		
@@ -143,15 +154,17 @@ class EdmundsRepositoryImpl
 				
 				JavascriptExecutor js = (JavascriptExecutor) webDriver
 				
+				//scroll to bottom of page to get the entire page to load (hopefully)
 				for (int second = 0;; second++) {
-					if(second >= waitTime){
+					if(second >= numTimesToScrollAndWait){
 						break;
 					}
-						js.executeScript("window.scrollBy(0,600)", "");
-						Thread.sleep(100);
+					js.executeScript("window.scrollBy(0,300)", "");
+					Thread.sleep(100);
 				}
 				
 				try {
+					//check if entire page is loaded (not fool proof)
 					(new WebDriverWait(webDriver, 10)).until(new ExpectedCondition<Boolean>() {
 						public Boolean apply(WebDriver d) {
 							String pageSource = d.getPageSource()
@@ -166,20 +179,35 @@ class EdmundsRepositoryImpl
 				}
 				
 				
+				// if this is the first run, fetch all the possible "style" keys (car options packages)
+				// from the dropdown
 				if (style == null) {									
 				
 					def stylesListJSON = null
 					try {
-						stylesListJSON = js.executeScript('''
-							var specsSelectOptions = document.getElementById("specs-diff").children[0].options
+						//use JS to get the styles from the dropdown
+						stylesListJSON = js.executeScript('''							
+							var selectCandidates = document.getElementsByTagName("select")
+							var specsSelectOptions = []
+							var selectedStyleId = 0
+							for(var i=0; i<selectCandidates.length; i++) {
+							    var sel = selectCandidates[i]
+							    if (sel.parentNode && sel.parentNode.id  && sel.parentNode.id.indexOf('specs-diff') >= 0) {
+							        specsSelectOptions = sel.options
+									selectedStyleId = sel.value
+							    }
+							}
 							var results = new Object()
 							for (var i=0;i<specsSelectOptions.length;i++) {
+								
 							    var opt = specsSelectOptions[i]
 							    var text = opt.text
 							    var value = opt.value
 							    results[value] = text
 							}
-							return JSON.stringify(results)																																
+							
+
+							return JSON.stringify({ selectedStyleId: selectedStyleId, results: results })																																
 						''');
 					} catch (Exception ex) {
 						logger.warn("error fetching ${makeName}, ${modelName}, ${year} ", ex)
@@ -190,19 +218,30 @@ class EdmundsRepositoryImpl
 						throw new EdmundsRepositoryFetchException("Can't parse selection objects: ", null)
 					}
 					
-					def stylesListData = jsSlurper.parseText(stylesListJSON)					
-					for (String key : stylesListData.keySet()) {
+					//setup the subsequent searches we will need for this car to get the other styles				
+					def stylesListData = jsSlurper.parseText(stylesListJSON)
+					
+					//determine what this style is
+					style = stylesListData["selectedStyleId"]
+					
+					if (style == 0) {
+						logger.warn("error fetching ${makeName}, ${modelName}, ${year} ")
+						return null
+					}
+										
+					for (String key : stylesListData["results"].keySet()) {
 						stylesToProcess << key
 						stylesCollectedDataMap[key] = [
 							desc: stylesListData[key]
 						]
 					}
 					
-					style = js.executeScript('''return document.getElementById("specs-diff").getElementsByTagName("select")[0].value''')
+				
 				} 
 				
 				def styleDataJSON = null
 				try {
+					//parse the HTML data table to get engine size, trim, mpg, car options, etc
 					styleDataJSON = js.executeScript('''
 						var dataTableCandidates = document.getElementById("specs-pod").getElementsByTagName("div")
 						var dataTables = []
@@ -229,9 +268,10 @@ class EdmundsRepositoryImpl
 					logger.warn("error, skipping ${makeName}, ${modelName}, ${year} ", ex)
 					continue
 				}
-					
-				
+									
 				def styleAllData = jsSlurper.parseText(styleDataJSON)
+				
+				//record the data for this car style
 				stylesCollectedDataMap[style] = stylesCollectedDataMap[style] + styleAllData  
 			}
 			
