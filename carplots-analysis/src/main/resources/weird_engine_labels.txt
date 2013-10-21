@@ -1,0 +1,7 @@
+ 
+ [1] "6 Cylinders"              "3.8L"                     "GasElectric I4 2.3L140"   "Gas I4 2.4L144"           "4.8L"                    
+ [6] "Gas V6 2.5L/152"          "Gas I4 2.4L144"           "6 Cylinders"              "Gas/Ethanol V6 3.9L/238," "Gas I4 2.4L/144"         
+[11] ""                         "8 Cylinders"              "Turbo Diesel V8 6.0L/366" "6 Cylinder,"              "1613"                    
+[16] "2.4L"                     "1.8L"                     ""                         ""                         ""                        
+[21] "4.0L"                     "76 horsepower 4 cylinder" "6 Cylinders"              "Gas V6 3.7L224"           "3.5L"                    
+[26] "Gas I4 2.4L/144"          "V6"                       "Gas V6 3.5L/213"          "Gas V6 3.2L/196"          "V6" 
