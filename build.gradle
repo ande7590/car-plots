@@ -50,6 +50,7 @@ configure(groovyProjects()) {
 
 configure(persistenceProjects()) {
 	dependencies {
+		compile project(':carplots-persistence')
 		compile 'org.hibernate:hibernate-entitymanager:4.2.3.Final'
 		compile 'org.hibernate:hibernate-c3p0:4.2.3.Final'
 		compile 'mysql:mysql-connector-java:5.1.25'

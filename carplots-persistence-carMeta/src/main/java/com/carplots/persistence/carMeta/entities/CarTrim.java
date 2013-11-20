@@ -8,14 +8,12 @@ public class CarTrim implements Serializable {
 
 	@Id
 	@Column(name="CarTrimID")
+	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	private long carTrimId;
 	
-//	@Column(name="CarModelI")
-//	private Integer carModelId;
+	@Column(name="CarModelID")
+	private long carModelId;
 	
-//	@
-//	private String engine;
-//	
 	@Column(name="Transmission")
 	private String transmission;
 	
@@ -24,5 +22,45 @@ public class CarTrim implements Serializable {
 	
 	@Column(name="TrimName")
 	private String trimName;
+
+	public long getCarTrimId() {
+		return carTrimId;
+	}
+
+	public void setCarTrimId(long carTrimId) {
+		this.carTrimId = carTrimId;
+	}
+
+	public String getTransmission() {
+		return transmission;
+	}
+
+	public void setTransmission(String transmission) {
+		this.transmission = transmission;
+	}
+
+	public String getDriveTrain() {
+		return driveTrain;
+	}
+
+	public void setDriveTrain(String driveTrain) {
+		this.driveTrain = driveTrain;
+	}
+
+	public String getTrimName() {
+		return trimName;
+	}
+
+	public void setTrimName(String trimName) {
+		this.trimName = trimName;
+	}
+
+	public long getCarModelId() {
+		return carModelId;
+	}
+
+	public void setCarModelId(long carModelId) {
+		this.carModelId = carModelId;
+	}
 	
 }

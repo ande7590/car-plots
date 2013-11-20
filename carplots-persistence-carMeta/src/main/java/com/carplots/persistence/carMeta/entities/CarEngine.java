@@ -1,9 +1,16 @@
 package com.carplots.persistence.carMeta.entities;
 
+import java.io.Serializable;
+
 import javax.persistence.*;
 
 @Entity(name="CarEngine")
-public class CarEngine {
+public class CarEngine implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 
 	@Id
 	@Column(name="CarEngineID")

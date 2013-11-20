@@ -1,4 +1,4 @@
-package com.numobi.persistence.test
+package com.carplots.persistence.scraper.test
 
 import com.carplots.persistence.ScraperPersistenceModule
 import com.google.inject.AbstractModule;

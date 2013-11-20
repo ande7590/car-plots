@@ -1,4 +1,4 @@
-package com.numobi.persistence.test
+package com.carplots.persistence.scraper.test
 
 import com.carplots.persistence.ScraperPersistenceModule
 import com.carplots.persistence.scraper.dao.ImportedDao;
@@ -15,12 +15,6 @@ class ImportedDaoTestModule extends AbstractModule {
 		bind(ImportedDao.class).to(ImportedDaoHibernateImpl.class);
 		bind(SearchDao.class).to(SearchDaoHibernateImpl.class);
 		install(new ScraperPersistenceModule());		
-	}
-	
-	def 'test iterateByExample'() {
-		
-		when: 
-		def example = new Imported()
 	}
 	
 }

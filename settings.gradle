@@ -1,1 +1,1 @@
-include 'carplots-analysis',  'carplots-service-analysis', 'carplots-scraper', 'carplots-service-scraper', 'carplots-persistence-scraper', 'carplots-common', 'carplots-persistence-carMeta'
+include 'carplots-analysis',  'carplots-service-analysis', 'carplots-scraper', 'carplots-service-scraper', 'carplots-persistence-scraper', 'carplots-common', 'carplots-persistence-carMeta', 'carplots-persistence'

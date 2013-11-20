@@ -1,6 +1,6 @@
 package com.carplots.service.scraper;
 
-import com.carplots.persistence.ScraperPersistenceModule;
+import com.carplots.persistence.scraper.module.ScraperPersistenceModule;
 import com.google.inject.AbstractModule;
 
 public class CarplotsScraperServiceModule extends AbstractModule{

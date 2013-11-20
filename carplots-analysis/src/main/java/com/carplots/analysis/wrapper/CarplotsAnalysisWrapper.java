@@ -7,9 +7,9 @@ import javax.persistence.EntityManager;
 
 import org.slf4j.Logger;
 
-import com.carplots.persistence.ScraperPersistenceInitializationService;
 import com.carplots.persistence.scraper.entities.Location;
 import com.carplots.persistence.scraper.entities.MakeModel;
+import com.carplots.persistence.scraper.module.ScraperPersistenceInitializationService;
 import com.carplots.service.analysis.CarplotsAnalysisService;
 import com.carplots.service.analysis.CarplotsAnalysisServiceImpl;
 import com.google.inject.Guice;

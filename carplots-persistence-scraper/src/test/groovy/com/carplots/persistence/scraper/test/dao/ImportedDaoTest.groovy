@@ -1,4 +1,4 @@
-package com.numobi.persistence.test.dao
+package com.carplots.persistence.scraper.test.dao
 
 import javax.persistence.EntityManager;
 import javax.swing.tree.FixedHeightLayoutCache.SearchInfo;

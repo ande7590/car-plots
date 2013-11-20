@@ -1,4 +1,4 @@
-package com.carplots.persistence;
+package com.carplots.persistence.scraper.module;
 
 import com.carplots.common.interfaces.InitializationService;
 import com.carplots.common.modules.AbstractCarplotsModule;
