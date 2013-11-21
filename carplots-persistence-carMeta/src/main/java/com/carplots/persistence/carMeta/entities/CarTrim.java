@@ -1,6 +1,8 @@
 package com.carplots.persistence.carMeta.entities;
 
 import java.io.Serializable;
+import java.util.Collection;
+
 import javax.persistence.*;
 
 @Entity(name = "CarTrim")
@@ -22,6 +24,12 @@ public class CarTrim implements Serializable {
 	
 	@Column(name="TrimName")
 	private String trimName;
+	
+	@ManyToMany(cascade=CascadeType.ALL)
+	@JoinTable( name="CarTrimEngine",
+				joinColumns={@JoinColumn(name="CarTrimID", referencedColumnName="CarTrimID")},
+				inverseJoinColumns={@JoinColumn(name="CarEngineID", referencedColumnName="CarEngineID")})
+	private Collection<CarEngine> engines;
 
 	public long getCarTrimId() {
 		return carTrimId;

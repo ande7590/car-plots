@@ -2,6 +2,7 @@ package com.carplots.persistence.carMeta.test
 
 import com.carplots.persistence.carMeta.dao.CarModelDao
 import com.carplots.persistence.carMeta.dao.hibernate.CarModelDaoHibernateImpl;
+import com.carplots.persistence.carMeta.entities.CarEngine;
 import com.carplots.persistence.carMeta.entities.CarModel;
 import com.carplots.persistence.carMeta.entities.CarTrim;
 import com.carplots.persistence.carMeta.module.CarMetaPersistenceInitializationService;
@@ -49,16 +50,14 @@ class CarModelDaoTest extends Specification {
 	def "test insert"() {
 		
 		when:
-		CarModel modelToInsert = new CarModel()
-		CarTrim trim1 = new CarTrim()
-		trim1.trimName = "XLS"
-		trim1.transmission = "6 speed auto"
-		trim1.driveTrain = "AWD"		
-		modelToInsert.setMakeName("carmaker")
-		modelToInsert.setModelName("carmodel")
-		modelToInsert.setYear(2003)
-		modelToInsert.setTrims([trim1])
-		
+				
+		CarEngine engine1 = new CarEngine(cylinders: 6, description: "engine1", displacementCC: 3000);
+		CarEngine engine2 = new CarEngine(cylinders: 4, description: "engine2", displacementCC: 1000);
+		CarTrim trim1 = new CarTrim(trimName: "XLS", transmission: "5 speed", driveTrain: "AWD", engines: [engine1])
+		CarTrim trim2 = new CarTrim(trimName: "XLT", transmission: "6 speed", driveTrain: "FWD", engines: [engine1, engine2])
+		CarTrim trim3 = new CarTrim(trimName: "LS", transmission: "4 speed", driveTrain: "RWD", engines: [engine1, engine2])
+		def trims = [trim1, trim2, trim3]
+		CarModel modelToInsert = new CarModel(makeName: "Test Make", modelName: "Test Model", year: 2003, trims: trims)
 		carModelDao.persist(modelToInsert)
 		
 		then:
