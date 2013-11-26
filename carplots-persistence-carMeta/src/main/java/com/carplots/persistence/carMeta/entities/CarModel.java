@@ -27,6 +27,9 @@ public class CarModel implements Serializable {
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	private long carModelId;
 	
+	@Column(name="MakeModelID", nullable=true)
+	private Long makeModelId;
+	
 	@Column(name="MakeName", nullable=false)
 	private String makeName;
 	
@@ -78,5 +81,13 @@ public class CarModel implements Serializable {
 
 	public void setTrims(List<CarTrim> trims) {
 		this.trims = trims;
+	}
+
+	public Long getMakeModelId() {
+		return makeModelId;
+	}
+
+	public void setMakeModelId(Long makeModelId) {
+		this.makeModelId = makeModelId;
 	}	
 }
