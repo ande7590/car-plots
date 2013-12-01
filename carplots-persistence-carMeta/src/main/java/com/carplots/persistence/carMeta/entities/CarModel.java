@@ -39,6 +39,9 @@ public class CarModel implements Serializable {
 	@Column(name="Year", nullable=false)
 	private Integer year;
 	
+	@Column(name="ModelType", nullable=false)
+	private String modelType;
+	
 	@OneToMany(cascade=CascadeType.ALL)
 	@JoinColumn(name="CarModelID", referencedColumnName="CarModelID")
 	private List<CarTrim> trims;
@@ -89,5 +92,13 @@ public class CarModel implements Serializable {
 
 	public void setMakeModelId(Long makeModelId) {
 		this.makeModelId = makeModelId;
+	}
+
+	public String getModelType() {
+		return modelType;
+	}
+
+	public void setModelType(String modelType) {
+		this.modelType = modelType;
 	}	
 }

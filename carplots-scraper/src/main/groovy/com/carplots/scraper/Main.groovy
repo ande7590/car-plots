@@ -5,7 +5,7 @@ import javax.persistence.EntityManager;
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory;
 
-import com.carplots.persistence.ScraperPersistenceInitializationService;
+import com.carplots.persistence.scraper.module.ScraperPersistenceInitializationService;
 import com.carplots.scraper.dataimport.DataImportManager
 import com.google.inject.Guice;
 import com.google.inject.Inject;
@@ -36,7 +36,7 @@ class Main {
 		}
 		catch (Exception ex) {
 			//once again, doesn't matter with the current storage engine
-			logger.warn('Caught exception from data import', ex)
+			logger.error('Caught exception from data import', ex)
 			entityManager.getTransaction().rollback()
 		}					
 	}

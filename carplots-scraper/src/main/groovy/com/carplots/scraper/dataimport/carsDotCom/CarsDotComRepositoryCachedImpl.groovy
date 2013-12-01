@@ -1,9 +1,9 @@
 package com.carplots.scraper.dataimport.carsDotCom
 
-import com.carplots.scraper.ScraperConfigService;
 import com.carplots.scraper.dataimport.carsDotCom.CarsDotComRepository.CarsDotComRepositoryFetchException
 import com.carplots.scraper.cache.Cache
 import com.carplots.scraper.cache.ZipFileCache;
+import com.carplots.scraper.config.ScraperConfigService;
 import com.google.inject.Inject;
 
 import java.util.zip.ZipEntry;

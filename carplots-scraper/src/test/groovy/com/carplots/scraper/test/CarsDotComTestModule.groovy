@@ -1,9 +1,7 @@
 package com.carplots.scraper.test
 
-import com.carplots.persistence.ScraperPersistenceModule
-import com.carplots.scraper.ScraperConfigService;
-import com.carplots.scraper.ScraperConfigService.ScraperConfigServicePropertyMissing;
-import com.carplots.scraper.ScraperConfigServiceImpl;
+import com.carplots.scraper.config.ScraperConfigService;
+import com.carplots.scraper.config.ScraperConfigServiceImpl;
 import com.carplots.scraper.dataimport.DataImportManager;
 import com.carplots.scraper.dataimport.ImportedEmitter;
 import com.carplots.scraper.dataimport.ImportedEmitterScraperServiceImpl;

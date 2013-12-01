@@ -2,10 +2,10 @@ package com.carplots.scraper.dataimport.carsDotCom
 
 import java.util.Iterator;
 
+import com.carplots.scraper.config.ScraperConfigService;
 import com.carplots.scraper.dataimport.carsDotCom.CarsDotComCrawlerIterator.CarsDotComCrawlerData
 import com.carplots.service.scraper.CarplotsScraperService
 import com.google.inject.Inject
-import com.carplots.scraper.ScraperConfigService
 
 class CarsDotComCrawlerImpl implements CarsDotComCrawler {
 

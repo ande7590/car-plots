@@ -3,6 +3,7 @@ package com.carplots.service.analysis;
 import java.util.Collection;
 import java.util.Iterator;
 
+import com.carplots.persistence.carMeta.entities.CarModel;
 import com.carplots.persistence.scraper.entities.Imported;
 import com.carplots.persistence.scraper.entities.Location;
 import com.carplots.persistence.scraper.entities.MakeModel;
@@ -20,4 +21,8 @@ public interface CarplotsAnalysisService {
 	Iterator<Imported> iterateImported(long makeModelID, long scraperRunId);
 	Iterator<Imported> iterateImported(long makeModelID, 
 			String zipcode, long scraperRunId);
+	
+	Iterator<Imported> iterateImported(String importedQuery);
+	Iterator<CarModel> iterateCarModel(String carModelQuery);
+	
 }

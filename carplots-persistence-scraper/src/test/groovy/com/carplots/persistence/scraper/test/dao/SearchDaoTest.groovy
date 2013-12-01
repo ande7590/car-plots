@@ -5,14 +5,13 @@ import javax.persistence.EntityManager;
 import spock.lang.Shared;
 import spock.lang.Specification;
 
-import com.carplots.persistence.ScraperPersistenceInitializationService
 import com.carplots.persistence.scraper.dao.ImportedDao;
 import com.carplots.persistence.scraper.dao.SearchDao;
+import com.carplots.persistence.scraper.module.ScraperPersistenceInitializationService;
+import com.carplots.persistence.scraper.test.SearchDaoTestModule;
 import com.google.inject.Injector
 import com.google.inject.Guice;
 import com.google.inject.Inject;
-import com.numobi.persistence.test.ImportedDaoTestModule
-import com.numobi.persistence.test.SearchDaoTestModule;
 
 class SearchDaoTest extends Specification {
 	

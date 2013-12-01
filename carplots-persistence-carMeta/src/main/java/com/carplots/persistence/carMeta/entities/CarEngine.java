@@ -15,10 +15,7 @@ public class CarEngine implements Serializable {
 	@Id
 	@Column(name="CarEngineID")
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
-	private long carEngineId;
-	
-	@Column(name="CarTrimID")
-	private long carTrimId;
+	private long carEngineId;	
 	
 	@Column(name="DisplacementCC", nullable=false)
 	private Integer displacementCC;
@@ -28,6 +25,9 @@ public class CarEngine implements Serializable {
 	
 	@Column(name="Description", nullable=false)
 	private String description;
+	
+	@Column(name="Horsepower", nullable=true)
+	private Integer horsepower;
 
 	public long getCarEngineId() {
 		return carEngineId;
@@ -61,11 +61,11 @@ public class CarEngine implements Serializable {
 		this.description = description;
 	}
 
-	public long getCarTrimId() {
-		return carTrimId;
+	public Integer getHorsepower() {
+		return horsepower;
 	}
 
-	public void setCarTrimId(long carTrimId) {
-		this.carTrimId = carTrimId;
+	public void setHorsepower(Integer horsepower) {
+		this.horsepower = horsepower;
 	}
 }

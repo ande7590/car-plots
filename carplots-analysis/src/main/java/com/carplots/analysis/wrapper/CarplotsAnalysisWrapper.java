@@ -53,18 +53,10 @@ public class CarplotsAnalysisWrapper {
 					injector.getInstance(
 							ScraperPersistenceInitializationService.class).start();
 					
-					System.out.println("Getting entity Manager");
-					EntityManager entityManager = injector.getInstance(
-							EntityManager.class);
-					
 					System.out.println("getting analysis service");
 					carplotsAnalysisService = (CarplotsAnalysisServiceImpl) injector.getInstance(CarplotsAnalysisService.class);
 
-					//start a transaction (doesn't really matter since 
-					//mySQL storage engine doesn't support it)
-					System.out.println("starting");
-					entityManager.getTransaction().begin();
-					
+					System.out.println("done");					
 					didInit = true;
 				}
 			}

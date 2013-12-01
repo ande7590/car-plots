@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import com.carplots.scraper.dataimport.edmunds.EdmundsRepository;
 import com.carplots.scraper.test.module.EdmundsJSONFetchModule;
+
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
@@ -118,7 +119,7 @@ class EdmundsJSONFetchTestDriver {
 				bodyTypes.each { bodyType ->
 					bodyType = cleanStr(bodyType)
 					years["USED"].each { yr ->
-						def linkParts = link.split('/')
+						                         
 						inputQ.add([
 							makeName: linkParts[1],
 							modelName: linkParts[2],

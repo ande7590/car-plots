@@ -4,15 +4,15 @@ import javax.persistence.EntityManager;
 import javax.swing.tree.FixedHeightLayoutCache.SearchInfo;
 
 import com.carplots.common.utilities.DebugUtility;
-import com.carplots.persistence.ScraperPersistenceInitializationService;
 import com.carplots.persistence.scraper.dao.ImportedDao;
 import com.carplots.persistence.scraper.dao.SearchDao;
 import com.carplots.persistence.scraper.dao.hibernate.ImportedDaoHibernateImpl;
 import com.carplots.persistence.scraper.dao.hibernate.SearchDaoHibernateImpl
 import com.carplots.persistence.scraper.entities.Imported
 import com.carplots.persistence.scraper.entities.Search
+import com.carplots.persistence.scraper.module.ScraperPersistenceInitializationService;
+import com.carplots.persistence.scraper.test.ImportedDaoTestModule;
 import com.google.inject.Inject;
-import com.numobi.persistence.test.ImportedDaoTestModule;
 import com.sun.xml.internal.ws.api.pipe.Engine;
 
 import spock.lang.Specification

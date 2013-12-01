@@ -1,4 +1,4 @@
-package com.carplots.scraper
+package com.carplots.scraper.config
 
 interface ScraperConfigService {
 	

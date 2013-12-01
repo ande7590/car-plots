@@ -16,7 +16,7 @@ import org.openqa.selenium.support.ui.WebDriverWait
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-import com.carplots.scraper.ScraperConfigService
+import com.carplots.scraper.config.ScraperConfigService;
 import com.carplots.scraper.dataimport.edmunds.EdmundsRepository.EdmundsRepositoryFetchException
 
 import com.google.inject.Inject

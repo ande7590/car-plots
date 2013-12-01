@@ -1,8 +1,7 @@
 package com.carplots.scraper.test
 
-import com.carplots.scraper.ScraperConfigService;
-import com.carplots.scraper.ScraperConfigService.ScraperConfigServicePropertyMissing
-import com.carplots.scraper.ScraperConfigServiceImpl;
+import com.carplots.scraper.config.ScraperConfigService;
+import com.carplots.scraper.config.ScraperConfigServiceImpl;
 import com.carplots.scraper.dataimport.edmunds.EdmundsRepositoryCachedImpl;
 import com.carplots.scraper.dataimport.edmunds.EdmundsRepositoryCachedImpl.EdmundsRepositoryCachedConfig;
 import com.carplots.scraper.dataimport.edmunds.EdmundsRepositoryImpl;

@@ -4,7 +4,8 @@ import javax.persistence.EntityManager;
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
-import com.carplots.persistence.ScraperPersistenceInitializationService
+
+import com.carplots.persistence.scraper.module.ScraperPersistenceInitializationService;
 import com.carplots.scraper.dataimport.carsDotCom.CarsDotComCrawlerIterator.CarsDotComCrawlerData;
 import com.carplots.scraper.test.CarsDotComTestModule
 import com.carplots.service.scraper.CarplotsScraperService;

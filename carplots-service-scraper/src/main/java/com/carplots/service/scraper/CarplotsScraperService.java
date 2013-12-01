@@ -11,6 +11,7 @@ import com.carplots.persistence.scraper.entities.Search;
 
 public interface CarplotsScraperService {
 	Collection<ScraperBatch> getScraperBatches();
+	Iterator<MakeModel> iterateMakeModels();
 	Iterator<Search> iterateScraperSearchBatch(long scraperBatchId);
 	void addScraperRun(ScraperRun scraperRun);
 	void updateScraperRun(ScraperRun scraperRun);

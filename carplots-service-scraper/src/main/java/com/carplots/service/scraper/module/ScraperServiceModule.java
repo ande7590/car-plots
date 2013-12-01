@@ -1,4 +1,4 @@
-package com.carplots.persistence.scraper.module;
+package com.carplots.service.scraper.module;
 
 import com.carplots.common.interfaces.InitializationService;
 import com.carplots.common.module.AbstractCarplotsPrivateModule;
@@ -17,32 +17,30 @@ import com.carplots.persistence.scraper.dao.hibernate.ScraperBatchDaoHibernateIm
 import com.carplots.persistence.scraper.dao.hibernate.ScraperBatchSearchDaoHibernateImpl;
 import com.carplots.persistence.scraper.dao.hibernate.ScraperRunDaoHibernateImpl;
 import com.carplots.persistence.scraper.dao.hibernate.SearchDaoHibernateImpl;
+import com.carplots.persistence.scraper.module.ScraperPersistenceInitializationService;
+import com.carplots.persistence.scraper.module.ScraperPersistenceModule;
+import com.carplots.service.scraper.CarplotsScraperService;
+import com.carplots.service.scraper.CarplotsScraperServiceImpl;
 import com.google.inject.persist.jpa.JpaPersistModule;
 
-public class ScraperPersistenceModule extends AbstractCarplotsPrivateModule {	
+public class ScraperServiceModule extends ScraperPersistenceModule {	
 	
 	public final static String CARPLOTS_SCRAPER_UNIT_NAME = "jpaCarplotsScraperUnit";
 	
 	@Override
 	protected void doConfigure() {
-		configurePersistence();
+		super.doConfigure();
+		configureService();
 	}
 
 	@Override
 	protected void doExpose() {
-		
+		expose(CarplotsScraperService.class);		
 	}
 	
-	protected void configurePersistence() {		
-		bind(LocationDao.class).to(LocationDaoHibernateImpl.class);
-		bind(ImportedDao.class).to(ImportedDaoHibernateImpl.class);
-		bind(MakeModelDao.class).to(MakeModelDaoHibernateImpl.class);
-		bind(ScraperBatchDao.class).to(ScraperBatchDaoHibernateImpl.class);
-		bind(ScraperBatchSearchDao.class).to(ScraperBatchSearchDaoHibernateImpl.class);
-		bind(ScraperRunDao.class).to(ScraperRunDaoHibernateImpl.class);
-		bind(SearchDao.class).to(SearchDaoHibernateImpl.class);
-		bind(InitializationService.class).to(ScraperPersistenceInitializationService.class);
-		install(new JpaPersistModule(CARPLOTS_SCRAPER_UNIT_NAME));
+	protected void configureService() {
+		bind(CarplotsScraperServiceImpl.class);
+		bind(CarplotsScraperService.class).to(CarplotsScraperServiceImpl.class);
 	}
 
 }

@@ -1,8 +1,8 @@
 package com.carplots.scraper.dataimport.edmunds
 
-import com.carplots.scraper.ScraperConfigService;
 import com.carplots.scraper.cache.Cache;
 import com.carplots.scraper.cache.ZipFileCache
+import com.carplots.scraper.config.ScraperConfigService;
 import com.carplots.scraper.dataimport.edmunds.EdmundsRepository.EdmundsRepositoryFetchException
 import com.google.inject.Inject;
 import groovy.json.JsonSlurper

@@ -1,7 +1,7 @@
-package com.carplots.scraper
+package com.carplots.scraper.config
 
 import com.carplots.common.exception.ApplicationConfigurationException;
-import com.carplots.scraper.ScraperConfigService.ScraperConfigServicePropertyMissing
+import com.carplots.scraper.config.ScraperConfigService.ScraperConfigServicePropertyMissing
 import com.google.inject.Singleton;
 
 import java.io.InputStream;
@@ -19,8 +19,6 @@ class ScraperConfigServiceImpl implements ScraperConfigService {
 		
 	private final Object configLock = new Object()	
 	private final def runtimePropertyMap = [:]
-	
-	
 	
 	private def get(propertyName) {				
 		

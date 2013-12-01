@@ -1,7 +1,7 @@
 package com.carplots.scraper.test.module
 
-import com.carplots.scraper.ScraperConfigService;
-import com.carplots.scraper.ScraperConfigServiceImpl;
+import com.carplots.scraper.config.ScraperConfigService;
+import com.carplots.scraper.config.ScraperConfigServiceImpl;
 import com.carplots.scraper.dataimport.edmunds.EdmundsRepository;
 import com.carplots.scraper.dataimport.edmunds.EdmundsRepositoryCachedImpl;
 import com.carplots.scraper.dataimport.edmunds.EdmundsRepositoryCachedImpl.EdmundsRepositoryCachedConfig;

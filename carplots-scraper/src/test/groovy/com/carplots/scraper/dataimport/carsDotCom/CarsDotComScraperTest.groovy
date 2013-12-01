@@ -1,6 +1,6 @@
 package com.carplots.scraper.dataimport.carsDotCom
 
-import com.carplots.persistence.ScraperPersistenceInitializationService
+
 import com.carplots.persistence.scraper.entities.Imported;
 import com.carplots.persistence.scraper.entities.Search
 import com.carplots.scraper.dataimport.carsDotCom.CarsDotComCrawlerIterator.CarsDotComCrawlerData

@@ -12,8 +12,8 @@ import com.carplots.common.exception.ApplicationConfigurationException;
 import com.carplots.persistence.scraper.entities.Imported;
 import com.carplots.persistence.scraper.entities.ScraperBatch
 import com.carplots.persistence.scraper.entities.ScraperRun;
-import com.carplots.scraper.ScraperConfigService
-import com.carplots.scraper.ScraperConfigService.ScraperConfigServicePropertyMissing;
+import com.carplots.scraper.config.ScraperConfigService.ScraperConfigServicePropertyMissing;
+import com.carplots.scraper.config.ScraperConfigService;
 import com.carplots.scraper.dataimport.DataImportManager;
 import com.carplots.scraper.dataimport.ImportedEmitter;
 import com.carplots.scraper.dataimport.carsDotCom.CarsDotComCrawlerIterator.CarsDotComCrawlerData

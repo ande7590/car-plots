@@ -1,5 +1,8 @@
 package com.carplots.scraper
 
+import com.carplots.scraper.config.ScraperConfigService;
+import com.carplots.scraper.config.ScraperConfigServiceImpl;
+import com.carplots.scraper.config.ScraperConfigServiceModule;
 import com.carplots.scraper.dataimport.DataImportManager;
 import com.carplots.scraper.dataimport.ImportedEmitter;
 import com.carplots.scraper.dataimport.ImportedEmitterScraperServiceImpl;
@@ -25,8 +28,8 @@ class ScraperModule extends AbstractModule {
 	@Override
 	protected void configure() {
 		
-		//TODO: config should have its own module
-		bind(ScraperConfigService.class).to(ScraperConfigServiceImpl.class)
+		install(new ScraperConfigServiceModule())
+		
 		bind(DataImportManagerConcurrentImplConfiguration.class)
 		bind(CarsDotComCrawlerConfig.class)
 		bind(CarsDotComCachedRepositoryConfig.class)

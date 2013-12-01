@@ -12,6 +12,7 @@ public class CarplotsAnalysisWrapperModule extends AbstractModule {
 		System.out.println("Calling configure");
 		bind(CarplotsAnalysisService.class).to(CarplotsAnalysisServiceImpl.class);
 		System.out.println("Installing persistence module");
+		
 		install(new ScraperPersistenceModule());
 		System.out.println("Configure done");
 	}

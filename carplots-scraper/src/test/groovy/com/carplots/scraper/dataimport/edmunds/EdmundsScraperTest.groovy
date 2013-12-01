@@ -1,8 +1,9 @@
 package com.carplots.scraper.dataimport.edmunds
 
-import com.carplots.persistence.ScraperPersistenceInitializationService
-import com.carplots.scraper.ScraperConfigService;
-import com.carplots.scraper.ScraperConfigServiceImpl;
+
+import com.carplots.persistence.scraper.module.ScraperPersistenceInitializationService;
+import com.carplots.scraper.config.ScraperConfigService;
+import com.carplots.scraper.config.ScraperConfigServiceImpl;
 import com.carplots.scraper.dataimport.carsDotCom.CarsDotComCrawler
 import com.carplots.scraper.test.CarsDotComTestModule
 import com.carplots.scraper.test.EdmundsTestModule;

@@ -25,6 +25,12 @@ public class CarTrim implements Serializable {
 	@Column(name="TrimName")
 	private String trimName;
 	
+	@Column(name="MpgHighway")
+	private Integer mpgHighway;
+	
+	@Column(name="MpgCity")
+	private Integer mpgCity;
+	
 	@ManyToMany(cascade=CascadeType.ALL)
 	@JoinTable( name="CarTrimEngine",
 				joinColumns={@JoinColumn(name="CarTrimID", referencedColumnName="CarTrimID")},
@@ -69,6 +75,30 @@ public class CarTrim implements Serializable {
 
 	public void setCarModelId(long carModelId) {
 		this.carModelId = carModelId;
+	}
+
+	public Integer getMpgHighway() {
+		return mpgHighway;
+	}
+
+	public void setMpgHighway(Integer mpgHighway) {
+		this.mpgHighway = mpgHighway;
+	}
+
+	public Integer getMpgCity() {
+		return mpgCity;
+	}
+
+	public void setMpgCity(Integer mpgCity) {
+		this.mpgCity = mpgCity;
+	}
+
+	public Collection<CarEngine> getEngines() {
+		return engines;
+	}
+
+	public void setEngines(Collection<CarEngine> engines) {
+		this.engines = engines;
 	}
 	
 }

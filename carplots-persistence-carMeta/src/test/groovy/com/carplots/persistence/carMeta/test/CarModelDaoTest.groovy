@@ -10,6 +10,7 @@ import com.carplots.persistence.carMeta.module.CarMetaPersistenceModule;
 import com.google.inject.Guice;
 
 import com.google.inject.Injector
+import com.google.inject.persist.Transactional;
 
 import javax.persistence.EntityManager
 import spock.lang.Shared;
@@ -33,12 +34,12 @@ class CarModelDaoTest extends Specification {
 	}
 	
 	def setup() {
-		entityManager.getTransaction().begin()
+		//entityManager.getTransaction().begin()
 	}
 	
 	def cleanup() {
 		//entityManager.getTransaction().rollback()
-		entityManager.getTransaction().commit()
+		//entityManager.getTransaction().commit()
 	}
 	
 	def "test guice setup"() { 
@@ -47,15 +48,16 @@ class CarModelDaoTest extends Specification {
 		entityManager != null
 	}
 	
+	@Transactional
 	def "test insert"() {
 		
 		when:
 				
-		CarEngine engine1 = new CarEngine(cylinders: 6, description: "engine1", displacementCC: 3000);
-		CarEngine engine2 = new CarEngine(cylinders: 4, description: "engine2", displacementCC: 1000);
-		CarTrim trim1 = new CarTrim(trimName: "XLS", transmission: "5 speed", driveTrain: "AWD", engines: [engine1])
-		CarTrim trim2 = new CarTrim(trimName: "XLT", transmission: "6 speed", driveTrain: "FWD", engines: [engine1, engine2])
-		CarTrim trim3 = new CarTrim(trimName: "LS", transmission: "4 speed", driveTrain: "RWD", engines: [engine1, engine2])
+		CarEngine engine1 = new CarEngine(cylinders: 6, description: "engine1", displacementCC: 3000, horsepower: 100);
+		CarEngine engine2 = new CarEngine(cylinders: 4, description: "engine2", displacementCC: 1000, horsepower: 50);
+		CarTrim trim1 = new CarTrim(trimName: "XLS", transmission: "5 speed", driveTrain: "AWD", engines: [engine1], mpgHighway: 30, mpgCity: 10)
+		CarTrim trim2 = new CarTrim(trimName: "XLT", transmission: "6 speed", driveTrain: "FWD", engines: [engine1, engine2], mpgHighway: 20, mpgCity: 10)
+		CarTrim trim3 = new CarTrim(trimName: "LS", transmission: "4 speed", driveTrain: "RWD", engines: [engine1, engine2], mpgHighway: 40, mpgCity: 35)
 		def trims = [trim1, trim2, trim3]
 		CarModel modelToInsert = new CarModel(makeName: "Test Make", modelName: "Test Model", year: 2003, trims: trims)
 		carModelDao.persist(modelToInsert)

@@ -8,7 +8,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory;
 
 import com.carplots.persistence.scraper.entities.Imported;
-import com.carplots.scraper.ScraperConfigService;
+import com.carplots.scraper.config.ScraperConfigService;
 import com.carplots.scraper.dataimport.carsDotCom.CarsDotComCrawlerIterator.CarsDotComCrawlerData;
 import com.google.inject.Inject;
 
