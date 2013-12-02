@@ -32,16 +32,7 @@ class CarModelDaoTest extends Specification {
 		carModelDao = injector.getInstance(CarModelDao.class)
 		entityManager = injector.getInstance(EntityManager.class)
 	}
-	
-	def setup() {
-		//entityManager.getTransaction().begin()
-	}
-	
-	def cleanup() {
-		//entityManager.getTransaction().rollback()
-		//entityManager.getTransaction().commit()
-	}
-	
+		
 	def "test guice setup"() { 
 		expect:
 		carModelDao != null && carModelDao instanceof CarModelDaoHibernateImpl

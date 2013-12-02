@@ -1,6 +1,5 @@
 library('rJava')
 library('data.table')
-library('lubridate')
 
 serviceClassName <- 
   'CarplotsAnalysisService';
@@ -80,13 +79,9 @@ getScraperRuns <- function (carplotsAnalysisService) {
   scraperRunsArray <- .jcall(scraperRuns, returnSig="[Ljava/lang/Object;", "toArray") 
   
   getScraperRunsDataTable <- function(scr) {
-    #getting requires cast, tostring
-    scr_casted <- .jcast(scraperRunsArray[[1]], "Lcom/carplots/persistence/scraper/entities/ScraperRun")
-    scr_date <- .jcall(scr_casted, returnSig="Ljava/util/Date;", "getScraperRunDt")
-    scr_date_str <- .jcall(scr_date, returnSig="Ljava/lang/String;", "toString")    
     data.table(
-      scraperRunId = .jcall(scr, returnSig="J", "getScraperRunId"),
-      scraperRunDt = ymd_hms(scr_date_str)
+      scraperRunId = .jcall(scr, returnSig="J", "getScraperRunId"), 
+      scraperRunDt = as.Date(.jcall(scr, returnSig="Ljava/lang/String;", "getScraperRunDateString"))
     );
   }
   
@@ -118,7 +113,7 @@ getImportedIterator <- function (carplotsAnalysisService, makeModelId=NULL, zipc
   iter
 }
 
-getImported <- function (jIterator) {  
+getImported <- function (jIterator, carplotsAnalysisService) {  
   
   getImportedDataTable <- function(imp) {
     imp <- .jcast(imp, "com/carplots/persistence/scraper/entities/Imported")
@@ -127,7 +122,8 @@ getImported <- function (jIterator) {
       listingId = .jcall(.jcall(imp, returnSig="Ljava/lang/Long;", "getListingId"), "J", "longValue"),
       miles = .jcall(.jcall(imp, returnSig="Ljava/lang/Integer;", "getMiles"), "I", "intValue"),
       price = .jcall(.jcall(imp, returnSig="Ljava/lang/Integer;", "getPrice"), "I", "intValue"),
-      year = .jcall(.jcall(imp, returnSig="Ljava/lang/Integer;", "getCarYear"), "I", "intValue")
+      year = .jcall(.jcall(imp, returnSig="Ljava/lang/Integer;", "getCarYear"), "I", "intValue"),
+      engineId = .jcall(carplotsAnalysisService@jService, returnSig="J", "getNearestEngineId", imp)
     );
   }
   
@@ -141,6 +137,3 @@ getImported <- function (jIterator) {
   rbindlist(rows)
 }
 
-#iter <- .jcall(service, returnSig="Ljava/util/Iterator;", method="iterateByMakeId", .jlong(1))
-#hasNext <- .jcall(iter, "Z", "hasNext")
-#next <- .jcall(iter, "Ljava/lang/Object;", "next")

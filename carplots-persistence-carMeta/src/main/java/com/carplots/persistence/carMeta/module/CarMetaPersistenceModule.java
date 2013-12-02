@@ -23,7 +23,7 @@ public class CarMetaPersistenceModule extends AbstractCarplotsPrivateModule {
 	
 	protected void configurePersistence() {
 		bind(CarModelDao.class).to(CarModelDaoHibernateImpl.class);
-		bind(InitializationService.class).annotatedWith(CarMeta.class).to(CarMetaPersistenceInitializationService.class);
+		bind(InitializationService.class).to(CarMetaPersistenceInitializationService.class);
 		install(new JpaPersistModule(CARPLOTS_CARMETA_UNIT_NAME));
 	}
 	

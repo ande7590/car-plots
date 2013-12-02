@@ -9,7 +9,6 @@ import com.carplots.persistence.dao.hibernate.AbstractHibernateDao;
 import com.carplots.persistence.dao.hibernate.ScrollableResultsIterator;
 import com.carplots.persistence.scraper.dao.SearchDao;
 import com.carplots.persistence.scraper.entities.Search;
-import com.sun.org.apache.bcel.internal.generic.GETSTATIC;
 
 public class SearchDaoHibernateImpl 
 	extends AbstractHibernateDao<Search, Long> 

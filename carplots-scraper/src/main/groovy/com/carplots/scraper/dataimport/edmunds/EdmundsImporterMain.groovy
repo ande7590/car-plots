@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import com.carplots.common.interfaces.InitializationService;
 import com.carplots.persistence.carMeta.module.CarMetaPersistenceInitializationService;
 import com.carplots.scraper.dataimport.DataImportManager;
-import com.carplots.scraper.dataimport.edmunds.module.CarMeta;
 import com.carplots.scraper.dataimport.edmunds.module.EdmundsImporterModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;

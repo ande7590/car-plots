@@ -22,7 +22,7 @@ public interface CarplotsAnalysisService {
 	Iterator<Imported> iterateImported(long makeModelID, 
 			String zipcode, long scraperRunId);
 	
-	Iterator<Imported> iterateImported(String importedQuery);
 	Iterator<CarModel> iterateCarModel(String carModelQuery);
 	
+	long getNearestEngineId(Imported imported);
 }

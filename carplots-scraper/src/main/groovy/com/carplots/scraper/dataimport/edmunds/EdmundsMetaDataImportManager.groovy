@@ -11,8 +11,6 @@ import com.carplots.persistence.carMeta.entities.CarTrim;
 import com.carplots.persistence.scraper.entities.MakeModel;
 import com.carplots.scraper.config.ScraperConfigService;
 import com.carplots.scraper.dataimport.DataImportManager;
-import com.carplots.scraper.dataimport.edmunds.module.CarMeta;
-import com.carplots.scraper.dataimport.edmunds.module.Scraper;
 import com.carplots.service.carMeta.CarMetaService;
 import com.carplots.service.scraper.CarplotsScraperService;
 import com.google.inject.Inject;
@@ -22,10 +20,10 @@ class EdmundsMetaDataImportManager implements DataImportManager {
 
 	org.slf4j.Logger logger = LoggerFactory.getLogger(EdmundsMetaDataImportManager.class)
 	
-	@Inject @CarMeta
+	@Inject @com.carplots.common.module.CarMeta
 	InitializationService carMetaInitSvc
 	
-	@Inject @Scraper
+	@Inject @com.carplots.common.module.Scraper
 	InitializationService scraperInitSvc
 	
 	@Inject
@@ -38,16 +36,16 @@ class EdmundsMetaDataImportManager implements DataImportManager {
 	CarplotsScraperService carScraperService
 	
 	@Inject
-	EdmundsRepository edmundsRepository	
+	EdmundsRepository edmundsRepository
 	
 	@Transactional()
-	@Override	
-	public void importData() {	
+	@Override
+	public void importData() {
 		try {
 			carMetaInitSvc.start()
 			scraperInitSvc.start()
 			doImport()
-		} 
+		}
 		finally {
 			try {
 				carMetaInitSvc.stop()
@@ -57,13 +55,13 @@ class EdmundsMetaDataImportManager implements DataImportManager {
 			try {
 				scraperInitSvc.stop()
 			} catch (Exception ex) {
-				logger.error("Error stopping scraperService: ", ex)		
+				logger.error("Error stopping scraperService: ", ex)
 			}
 		}
 		
 	}
 	
-	private void doImport() {				
+	private void doImport() {
 								
 		EdmundsRepositoryImpl.edmundsMakesJSON.each { makeName ->
 			def jsonData = edmundsRepository.getMakeJSON(makeName)
@@ -72,22 +70,22 @@ class EdmundsMetaDataImportManager implements DataImportManager {
 			jsonData["models"].each { modelDataKey, modelData ->
 				if (!modelDataKey.contains(':') || modelDataKey.endsWith(':')) {
 					modelDataKey = '${modelDataKey}:none'
-				}				
+				}
 				def link = cleanStr(modelData["link"])
 				def bodyTypes = modelData['bodytypes']
 				def years = modelData['years']
 				bodyTypes.each { bodyType ->
 					bodyType = cleanStr(bodyType)
-					years["USED"].each { yr ->		
+					years["USED"].each { yr ->
 						def linkParts = link.split('/')
 						def (make, model, year) = [linkParts[1], linkParts[2], "$yr" as String]
 						def edmundsData = edmundsRepository.getMakeModelYearJSON(
 								make, model, year)
 						def isFirst = true
-						CarModel carModel = null												 
-						edmundsData.each { edmundsId, dataMap -> 
-							if (isFirst) {			
-								MakeModel makeModel = getMakeModel(make, model)			
+						CarModel carModel = null
+						edmundsData.each { edmundsId, dataMap ->
+							if (isFirst) {
+								MakeModel makeModel = getMakeModel(make, model)
 								carModel = new CarModel(
 									makeName: make,
 									modelName: model,
@@ -95,12 +93,12 @@ class EdmundsMetaDataImportManager implements DataImportManager {
 									modelType: bodyType,
 									makeModelId: makeModel.getMakeModelId(),
 									trims: [])
-								isFirst = false								
+								isFirst = false
 							}
 							def mpg = (dataMap['Fuel Economy'] =~ /[^0-9\/]/).replaceAll('').trim().split('/')
 							if (mpg.size() < 2) {
 								mpg = [null, null]
-							}							
+							}
 							CarTrim carTrim = new CarTrim(
 								driveTrain: dataMap['Drivetrain'],
 								transmission: dataMap['Transmission'],
@@ -115,25 +113,25 @@ class EdmundsMetaDataImportManager implements DataImportManager {
 							def cylinderMatch = (engine =~ /(?i).*?(\d+[ -]*cyl).*?/)
 							
 							def horsepower = dataMap['Horse Power']
-							def hpMatch = (horsepower =~ /(?i).*?([0-9]+\s*h).*?/)							
+							def hpMatch = (horsepower =~ /(?i).*?([0-9]+\s*h).*?/)
 							
 							if (!engineMatch.matches() || !cylinderMatch.matches()) {
 								logger.warn("Cannot find engine for $make, $model, $year: $engine")
-							}							
+							}
 							else {
 								def hp = 0
 								if (!hpMatch.matches()) {
 									logger.warn("Cannot find horsepower for $make, $model, $year: $horsepower")
 								}
 								else {
-									hp = stripNonNumericChars(hpMatch[0][1]) as Integer		
+									hp = stripNonNumericChars(hpMatch[0][1]) as Integer
 								}
 								CarEngine carEngine = new CarEngine(
 									cylinders: stripNonNumericChars(cylinderMatch[0][1]) as Integer,
 									description: engine,
 									displacementCC: ((stripNonNumericChars(engineMatch[0][1]) as Double) * 1000) as Integer,
 									horsepower: hp)
-								carTrim.engines.add(carEngine)								
+								carTrim.engines.add(carEngine)
 							}
 						}
 						carMetaService.createModel(carModel)
@@ -148,11 +146,11 @@ class EdmundsMetaDataImportManager implements DataImportManager {
 	}
 	
 	def stripNonNumericChars(def str) {
-		def cleaned = (str =~ /[^0-9.]/).replaceAll('')		
+		def cleaned = (str =~ /[^0-9.]/).replaceAll('')
 		return (cleaned == '')? '0' : cleaned
 	}
 	
-	def getKey(def str) {		
+	def getKey(def str) {
 		return (str.toLowerCase() =~ /[^A-Za-z0-9]/).replaceAll('').trim()
 	}
 	
@@ -170,11 +168,11 @@ class EdmundsMetaDataImportManager implements DataImportManager {
 		if (makeModelMap == null) {
 			makeModelMap = [:]
 			
-			for (MakeModel mm : carScraperService.iterateMakeModels()) { 
+			for (MakeModel mm : carScraperService.iterateMakeModels()) {
 				def makeNameKey = getKey(mm.makeName)
 				if (!makeModelMap.containsKey(makeNameKey)) {
 					makeModelMap[makeNameKey] = [:]
-				}				
+				}
 				def modelNameKey = getKey(mm.modelName)
 				makeModelMap[makeNameKey].put(modelNameKey, mm)
 			}
@@ -182,7 +180,7 @@ class EdmundsMetaDataImportManager implements DataImportManager {
 		
 		def makeKey = getKey(makeName)
 		if (!makeModelMap.containsKey(makeKey)) {
-			if (!missingMakeMap.containsKey(makeKey)) {				
+			if (!missingMakeMap.containsKey(makeKey)) {
 				def mostSimilarKey = null
 				def mostSimilarDist = Integer.MAX_VALUE
 				makeModelMap.each { key, val ->
@@ -190,11 +188,11 @@ class EdmundsMetaDataImportManager implements DataImportManager {
 					if (similarity < mostSimilarDist) {
 						mostSimilarKey = key
 						mostSimilarDist = similarity
-					}					
-				}				
+					}
+				}
 				missingMakeMap[makeKey] = mostSimilarKey
 			}
-			makeKey = missingMakeMap[makeKey]						
+			makeKey = missingMakeMap[makeKey]
 		}
 		
 		def modelMap = makeModelMap[makeKey]
@@ -202,12 +200,12 @@ class EdmundsMetaDataImportManager implements DataImportManager {
 		if (!modelMap.containsKey(modelKey)) {
 			def mostSimilarKey = null
 			def mostSimilarDist = Integer.MAX_VALUE
-			modelMap.each { key, value -> 
+			modelMap.each { key, value ->
 				def similarity = getLevenshteinDistance(key, modelKey)
 				if (similarity < mostSimilarDist) {
 					mostSimilarKey = key
 					mostSimilarDist = similarity
-				}		
+				}
 			}
 			modelKey = mostSimilarKey
 		}
@@ -228,25 +226,5 @@ class EdmundsMetaDataImportManager implements DataImportManager {
 		return false;
 	}
 	
-	public static int getLevenshteinDistance(String str1,String str2) {
-		int[][] distance = new int[str1.length() + 1][str2.length() + 1];
-
-		for (int i = 0; i <= str1.length(); i++)
-				distance[i][0] = i;
-		for (int j = 1; j <= str2.length(); j++)
-				distance[0][j] = j;
-
-		for (int i = 1; i <= str1.length(); i++)
-				for (int j = 1; j <= str2.length(); j++)
-						distance[i][j] = minimum(
-										distance[i - 1][j] + 1,
-										distance[i][j - 1] + 1,
-										distance[i - 1][j - 1]+ ((str1.charAt(i - 1) == str2.charAt(j - 1)) ? 0 : 1));
-
-		return distance[str1.length()][str2.length()];
-	}
-	private static int minimum(int a, int b, int c) {
-		return Math.min(Math.min(a, b), c);
-	}
 
 }

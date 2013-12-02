@@ -43,20 +43,16 @@ public class CarplotsAnalysisWrapper {
 			synchronized (initLock) {
 				if (!didInit) {
 									
-					System.out.println("Creating injector");
+					System.out.println("init started, creating injector");
 					//load dependency injection framework
 					Injector injector = Guice.createInjector(
-							new CarplotsAnalysisWrapperModule());
+							new CarplotsAnalysisWrapperModule());					
 					
-					//start persistence framework
-					System.out.println("Starting persistence");
-					injector.getInstance(
-							ScraperPersistenceInitializationService.class).start();
-					
-					System.out.println("getting analysis service");
-					carplotsAnalysisService = (CarplotsAnalysisServiceImpl) injector.getInstance(CarplotsAnalysisService.class);
+					System.out.println("getting analysis service from injector");
+					carplotsAnalysisService = injector.getInstance(
+							CarplotsAnalysisServiceImpl.class);
 
-					System.out.println("done");					
+					System.out.println("init done");					
 					didInit = true;
 				}
 			}

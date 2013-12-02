@@ -1,6 +1,8 @@
 package com.carplots.persistence.scraper.entities;
 
 import java.io.Serializable;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import javax.persistence.Column;
@@ -10,10 +12,12 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.swing.text.DateFormatter;
 
 @Entity(name = "ScraperRun")
 public class ScraperRun implements Serializable {
-	
+
+	private static DateFormat dateStringFormatter = new SimpleDateFormat("yyyy-MM-dd");
 	private static final long serialVersionUID = 1L;
 	
 	@Id
@@ -65,6 +69,10 @@ public class ScraperRun implements Serializable {
 
 	public static long getSerialversionuid() {
 		return serialVersionUID;
+	}
+	
+	public String getScraperRunDateString() {
+		return dateStringFormatter.format(scraperRunDt);
 	}
 	
 }
