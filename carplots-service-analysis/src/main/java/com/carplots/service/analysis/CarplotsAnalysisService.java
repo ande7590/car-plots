@@ -1,5 +1,7 @@
 package com.carplots.service.analysis;
 
+import groovy.json.JsonBuilder;
+
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -25,4 +27,8 @@ public interface CarplotsAnalysisService {
 	Iterator<CarModel> iterateCarModel(String carModelQuery);
 	
 	long getNearestEngineId(Imported imported);
+	
+	void setDocumentStore(String documentStoreURL);
+	String updateDocument(String document);	
+	String createDocument(String document);
 }

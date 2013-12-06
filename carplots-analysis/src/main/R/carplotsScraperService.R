@@ -1,5 +1,6 @@
 library('rJava')
 library('data.table')
+library('rjson')
 
 serviceClassName <- 
   'CarplotsAnalysisService';
@@ -137,3 +138,14 @@ getImported <- function (jIterator, carplotsAnalysisService) {
   rbindlist(rows)
 }
 
+setDocumentStore <- function(docStoreURL, carplotsAnalysisService) {  
+  .jcall(carplotsAnalysisService@jService, returnSig="V", "setDocumentStore", docStoreURL)  
+}
+
+createDocument <- function(document, carplotsAnalysisService) {
+  .jcall(carplotsAnalysisService@jService, returnSig="S", "createDocument", toJSON(document))
+}
+
+updateDocument <- function(document, carplotsAnalysisService) {
+  .jcall(carplotsAnalysisService@jService, returnSig="S", "updateDocument", toJSON(document))
+}

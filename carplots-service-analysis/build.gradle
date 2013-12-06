@@ -12,5 +12,5 @@ apply plugin: 'groovy'
 dependencies {
 	compile project(':carplots-persistence-scraper')
 	compile project(':carplots-persistence-carMeta')
-	compile 'com.google.guava:guava:14.0.1'
+	compile project(':carplots-service-documentStore')
 }

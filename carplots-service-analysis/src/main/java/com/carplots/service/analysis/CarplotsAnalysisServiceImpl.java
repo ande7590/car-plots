@@ -23,13 +23,18 @@ import com.carplots.persistence.scraper.entities.Location;
 import com.carplots.persistence.scraper.entities.MakeModel;
 import com.carplots.persistence.scraper.entities.ScraperRun;
 import com.carplots.persistence.scraper.entities.Search;
+import com.carplots.service.documentStore.DocumentStore;
+import com.carplots.service.documentStore.DocumentStore.DocumentStoreException;
+import com.carplots.service.documentStore.DocumentStoreCouchDBStringImpl;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
 public class CarplotsAnalysisServiceImpl implements CarplotsAnalysisService {
-
+	
+	private DocumentStore<String, String> docStore = null;
+	
 	private final static String engineCleanRegex = "[^0-9.]";
 	private final static Integer engineSizeToleranceCC = 100; 	//Cubic centimeters
 	private final static long invalidEngineId = -1l;
@@ -203,6 +208,45 @@ public class CarplotsAnalysisServiceImpl implements CarplotsAnalysisService {
 		}
 		
 		return (nearestEngine == null)? invalidEngineId : nearestEngine.getCarEngineId();
+	}
+
+	
+
+	
+	@Override
+	public String updateDocument(String document) {		
+		String message = "ERROR: <null>";
+		try {
+			checkDocStore();
+			message = docStore.updateDocument(document);
+		} catch (Exception e) {
+			message = "ERROR: " + 
+					((e.getMessage() == null)? "<null>" : e.getMessage());
+		}
+		return message;
+	}
+
+	@Override
+	public String createDocument(String document) {
+		String message = "ERROR: <null>";
+		try {
+			checkDocStore();
+			message = docStore.createDocument(document);
+		} catch (Exception e) {
+			message = "ERROR: " + 
+					((e.getMessage() == null)? "<null>" : e.getMessage());
+		}
+		return message;
+	}
+	
+	private void checkDocStore() {
+		if (docStore == null) 
+			throw new RuntimeException("Must set document store");
+	}
+
+	@Override
+	public void setDocumentStore(String documentStoreURL) {
+		docStore = new DocumentStoreCouchDBStringImpl(documentStoreURL);		
 	}
 	
 }
