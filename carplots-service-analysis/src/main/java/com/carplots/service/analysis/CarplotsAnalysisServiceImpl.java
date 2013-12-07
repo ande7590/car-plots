@@ -33,7 +33,9 @@ import com.google.inject.Inject;
 
 public class CarplotsAnalysisServiceImpl implements CarplotsAnalysisService {
 	
-	private DocumentStore<String, String> docStore = null;
+	private static final int initialArraySize = 4096;
+	
+	private DocumentStore<String, String> docStore = null;	
 	
 	private final static String engineCleanRegex = "[^0-9.]";
 	private final static Integer engineSizeToleranceCC = 100; 	//Cubic centimeters
@@ -209,9 +211,6 @@ public class CarplotsAnalysisServiceImpl implements CarplotsAnalysisService {
 		
 		return (nearestEngine == null)? invalidEngineId : nearestEngine.getCarEngineId();
 	}
-
-	
-
 	
 	@Override
 	public String updateDocument(String document) {		
@@ -248,5 +247,57 @@ public class CarplotsAnalysisServiceImpl implements CarplotsAnalysisService {
 	public void setDocumentStore(String documentStoreURL) {
 		docStore = new DocumentStoreCouchDBStringImpl(documentStoreURL);		
 	}
+
+	@Override
+	public Object[] fastIter(Iterator<Imported> iterator) throws Exception {
+		int arraySize = initialArraySize;
+		int count = 0;
+		Object[] buffer = new Object[initialArraySize];
+		while (iterator.hasNext()) {
+			if (count == Integer.MAX_VALUE) {
+				throw new Exception("Integer overflow, too much data");
+			}
+			if (count == arraySize) {
+				if (arraySize >= Integer.MAX_VALUE >> 1) {
+					arraySize = Integer.MAX_VALUE;
+				}
+				else {
+					arraySize *= 2;
+				}				
+				Object[] newBuffer = new Object[arraySize];
+				System.arraycopy(buffer, 0, newBuffer, 0, buffer.length);
+				buffer = newBuffer;
+			}			
+			final Imported i = iterator.next();
+			final long importedId = i.getImportedId();
+			final Long listingId = i.getListingId();
+			final Integer miles = i.getMiles();
+			final Integer price = i.getPrice();
+			final Integer carYear = i.getCarYear();
+			final long nearestEngineId = getNearestEngineId(i);
+			
+			if (listingId != null && miles != null && price != null && carYear != null) {
+				buffer[count] = new long[]{
+						importedId,
+						listingId,
+						(long)miles,
+						(long)price,
+						(long)carYear,
+						nearestEngineId
+				};		
+			}				
+			count++;
+			if (count % 1000 == 0) {
+				System.out.format("Processed %d\n", count);
+			}
+		}
+		
+		//R chokes on null values and we need to use lapply() to combine results.		
+		final Object[] returnVal = new Object[count];
+		System.arraycopy(buffer, 0, returnVal, 0, count);
+		
+		return returnVal;
+	}
+	
 	
 }

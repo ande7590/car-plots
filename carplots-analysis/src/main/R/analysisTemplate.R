@@ -1,7 +1,10 @@
 source('~/workspace/car-plots/carplots-analysis/src/main/R/carplotsScraperService.R')
-.jinit()
+source('~/workspace/car-plots/carplots-analysis/src/main/R/analysisFunctions.R')
+.jinit(parameters="-Xmx8196m")
 carplotsService <- new(serviceClassName)
 carplots.makeModels <- getMakeModels(carplotsService)
 carplots.locations <- getSearchLocations(carplotsService)
 carplots.scraperRuns <- getScraperRuns(carplotsService)
-setDocumentStore("http://localhost:5984/mycouchshop", carplotsService)
+setDocumentStore("http://localhost:5984/carplots", carplotsService)
+
+#iter <- getImportedIterator(makeModelId=10, carplotsService)

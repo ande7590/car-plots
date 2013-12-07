@@ -24,6 +24,8 @@ public interface CarplotsAnalysisService {
 	Iterator<Imported> iterateImported(long makeModelID, 
 			String zipcode, long scraperRunId);
 	
+	Object[] fastIter(Iterator<Imported> iterator) throws Exception;
+	
 	Iterator<CarModel> iterateCarModel(String carModelQuery);
 	
 	long getNearestEngineId(Imported imported);
