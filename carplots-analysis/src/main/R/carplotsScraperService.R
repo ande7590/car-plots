@@ -117,8 +117,9 @@ getImportedIterator <- function (carplotsAnalysisService, makeModelId=NULL, zipc
 getImportedFast <- function(jIterator, carplotsAnalysisService) {
   jArr <- .jcall(carplotsService@jService, "[Ljava/lang/Object;", "fastIter", jIterator)
   print("Creating data table...")
-  dt <- data.table(matrix(sapply(jArr, .jevalArray), ncol=6, byrow=TRUE))
-  setnames(dt, c("importedId", "listingId", "miles", "price", "year", "engineId"))
+  colNames <- c("importedId", "listingId", "miles", "price", "year", "engineId", "run_yr", "run_qtr")
+  dt <- data.table(matrix(sapply(jArr, .jevalArray), ncol=length(colNames), byrow=TRUE))
+  setnames(dt, colNames)
   setkey(dt, "year")
   dt
 }

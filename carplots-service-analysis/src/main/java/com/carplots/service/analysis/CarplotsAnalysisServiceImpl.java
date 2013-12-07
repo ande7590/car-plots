@@ -1,9 +1,14 @@
 package com.carplots.service.analysis;
 
+import java.util.Calendar;
 import java.util.Collection;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import com.carplots.common.interfaces.InitializationService;
 import com.carplots.common.module.CarMeta;
@@ -248,11 +253,20 @@ public class CarplotsAnalysisServiceImpl implements CarplotsAnalysisService {
 		docStore = new DocumentStoreCouchDBStringImpl(documentStoreURL);		
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public Object[] fastIter(Iterator<Imported> iterator) throws Exception {
 		int arraySize = initialArraySize;
-		int count = 0;
+		
+				
+		final Map<Long, ScraperRun> scraperRunLookup = new HashMap<Long, ScraperRun>();
+		for (ScraperRun run : getScraperRuns()) {
+			scraperRunLookup.put(run.getScraperRunId(), run);
+		}
+		
 		Object[] buffer = new Object[initialArraySize];
+		final Calendar cal = Calendar.getInstance();
+		int count = 0;
 		while (iterator.hasNext()) {
 			if (count == Integer.MAX_VALUE) {
 				throw new Exception("Integer overflow, too much data");
@@ -275,15 +289,21 @@ public class CarplotsAnalysisServiceImpl implements CarplotsAnalysisService {
 			final Integer price = i.getPrice();
 			final Integer carYear = i.getCarYear();
 			final long nearestEngineId = getNearestEngineId(i);
-			
-			if (listingId != null && miles != null && price != null && carYear != null) {
+			final Long scraperRunId = i.getScraperRunId();
+			final ScraperRun scraperRun = scraperRunLookup.get(scraperRunId);
+						
+			if (listingId != null && miles != null && price != null && carYear != null && 
+					scraperRun != null) {				
+				cal.setTime(scraperRun.getScraperRunDt());
 				buffer[count] = new long[]{
 						importedId,
 						listingId,
 						(long)miles,
 						(long)price,
 						(long)carYear,
-						nearestEngineId
+						nearestEngineId,
+						cal.get(Calendar.YEAR),
+						(cal.get(Calendar.MONTH)) / 4
 				};		
 			}				
 			count++;
