@@ -1,4 +1,4 @@
-package com.carplots.persistence.dao;
+package com.carplots.persistence.dao.jpa;
 
 import java.io.Serializable;
 import java.util.Iterator;
@@ -12,8 +12,8 @@ import org.jodah.typetools.TypeResolver;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
-public abstract class AbstractDao<ENTITY_TYPE extends Serializable, ENTITY_PK_TYPE> 
-	implements GenericDao<ENTITY_TYPE, ENTITY_PK_TYPE> {
+public abstract class AbstractJPADao<ENTITY_TYPE extends Serializable, ENTITY_PK_TYPE> 
+	implements GenericJPADao<ENTITY_TYPE, ENTITY_PK_TYPE> {
 		
 	@Inject
 	private Provider<EntityManager> emProvider;
@@ -22,8 +22,8 @@ public abstract class AbstractDao<ENTITY_TYPE extends Serializable, ENTITY_PK_TY
 	private Class<ENTITY_PK_TYPE> entityPkType;
 	
 	@SuppressWarnings("unchecked")
-	public AbstractDao() {
-		Class<?>[] typeArguments = TypeResolver.resolveRawArguments(AbstractDao.class, getClass());
+	public AbstractJPADao() {
+		Class<?>[] typeArguments = TypeResolver.resolveRawArguments(AbstractJPADao.class, getClass());
 		entityType = (Class<ENTITY_TYPE>)typeArguments[0];
 		entityPkType = (Class<ENTITY_PK_TYPE>)typeArguments[1];
 	}		

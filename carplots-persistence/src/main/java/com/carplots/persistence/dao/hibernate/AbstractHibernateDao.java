@@ -10,10 +10,10 @@ import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.criterion.Example;
 
-import com.carplots.persistence.dao.AbstractDao;
+import com.carplots.persistence.dao.jpa.AbstractJPADao;
 
 public class AbstractHibernateDao<ENTITY_TYPE extends Serializable, ENTITY_PK_TYPE> 
-	extends AbstractDao<ENTITY_TYPE, ENTITY_PK_TYPE>
+	extends AbstractJPADao<ENTITY_TYPE, ENTITY_PK_TYPE>
 {	
 	@Override
 	public List<ENTITY_TYPE> findByExample(ENTITY_TYPE entity) {

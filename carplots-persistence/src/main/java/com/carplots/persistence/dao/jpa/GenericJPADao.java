@@ -1,9 +1,9 @@
-package com.carplots.persistence.dao;
+package com.carplots.persistence.dao.jpa;
 
 import java.util.Iterator;
 import java.util.List;
 
-public interface GenericDao<ENTITY_TYPE, ENTITY_PK_TYPE> {
+public interface GenericJPADao<ENTITY_TYPE, ENTITY_PK_TYPE> {
 
 	ENTITY_TYPE findByPk(ENTITY_PK_TYPE pk);
 	Iterator<ENTITY_TYPE> iterateAll();
