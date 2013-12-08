@@ -7,4 +7,5 @@ carplots.locations <- getSearchLocations(carplotsService)
 carplots.scraperRuns <- getScraperRuns(carplotsService)
 setDocumentStore("http://localhost:5984/carplots", carplotsService)
 
-#iter <- getImportedIterator(makeModelId=10, carplotsService)
+iter <- getImportedIterator(makeModelId=10, carplotsService)
+dt <- getImportedFast(iter, carplotsService)
