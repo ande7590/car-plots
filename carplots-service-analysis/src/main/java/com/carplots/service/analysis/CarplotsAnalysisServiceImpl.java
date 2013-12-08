@@ -42,6 +42,7 @@ public class CarplotsAnalysisServiceImpl implements CarplotsAnalysisService {
 	private static final int initialArraySize = 4096;
 	
 	private DocumentStore<String, String> docStore = null;	
+	private final Map<Long, Search> searchMap = new HashMap<Long, Search>();
 	
 	private final static String engineCleanRegex = "[^0-9.]";
 	private final static Integer engineSizeToleranceCC = 100; 	//Cubic centimeters
@@ -213,7 +214,8 @@ public class CarplotsAnalysisServiceImpl implements CarplotsAnalysisService {
 	
 	private long doGetNearestEngineId(Imported imported) {
 		CarEngine nearestEngine = null;
-		final Search search = searchDao.findByPk(imported.getSearchId());
+		
+		final Search search = getSearchMap().get(imported.getSearchId());
 				
 		if (imported.getEngine() != null && search != null && search.getSearchId() > 0) {
 			final CarModel carModel = new CarModel();
@@ -303,4 +305,19 @@ public class CarplotsAnalysisServiceImpl implements CarplotsAnalysisService {
 		}
 		return linkedList;
 	}
+	
+	@Transactional
+	private Map<Long, Search> getSearchMap() {
+		if (searchMap.size() == 0) {
+			System.out.println("Building search map");
+			final Iterator<Search> iter = searchDao.iterateAll();
+			while (iter.hasNext()) {
+				final Search next = iter.next();
+				searchMap.put(next.getSearchId(), next);
+			}			
+		}		
+		return searchMap;
+	}
+	
+
 }

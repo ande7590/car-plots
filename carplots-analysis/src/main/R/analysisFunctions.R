@@ -6,9 +6,12 @@ carplots.MINIMUM_MILEAGE_BINS <- 10
 carplots.IQR_OUTLIER_FACTOR = 2.0
 
 carplots.clean <- function(dt) {
-  dt <- dt[which(dt$year >= 1914 & dt$year <= 2020 & dt$miles > 1 & dt$miles < carplots.MILEAGE_MAX & dt$engineId > -1), ]
+  dt <- dt[which(dt$year >= 1914 & dt$year <= 2020 & dt$miles > 1 & dt$miles < carplots.MILEAGE_MAX), ]
+  if (nrow(dt[engineId < 0, ]) < nrow(dt)) {
+    dt <- dt[engineId > 0, ]
+  }  
   outlier_threshold <- quantile(dt$price)[4] + carplots.IQR_OUTLIER_FACTOR * IQR(dt$price)
-  if (priceIQR > 0) {
+  if (outlier_threshold > 0) {
     dt <- dt[which(dt$price > 300 & dt$price <= outlier_threshold), ]
   }
   dt
@@ -133,17 +136,21 @@ carplots.apply <- function(dt, binResolution=5000, price_aggregate_fn=mean,
   retVal
 }
 
-carplots.buildAndStorePlots <- function(service) {
+carplots.buildAndStorePlots <- function(service, makeFilter) {
   
-  carplots.makeModels <- getMakeModels(service)
-  for (i in 1:nrow(carplots.makeModels)) {
-    makeModel <- carplots.makeModels[i]
-    out <- tryCatch( 
-    {
+  carplots.makeModels <- getMakeModels(service)  
+  makesToProcess <- carplots.makeModels[makeName == makeFilter, ]
+  
+  print(paste("Processing ", nrow(makesToProcess), " models"))
+  
+  for (i in 1:nrow(makesToProcess)) {
+    makeModel <- makesToProcess[i]
+    #out <- tryCatch( 
+    #{
       print(paste(c("fetching ", makeModel), collapse=" "))
-      dt <- getImported(makeModelId=makeModel$makeModelId, service)
-      print("creating plot")
+      dt <- getImported(makeModelId=makeModel$makeModelId, service)      
       dt <- carplots.clean(dt)
+      print(paste("creating plot from ", nrow(dt), " data points"))
       if (nrow(dt) > 0) {
         dt <- carplots.apply(dt)
         carplots.create(dt, process_fn=function(car_dt, pt_data) {
@@ -159,13 +166,13 @@ carplots.buildAndStorePlots <- function(service) {
         })        
       }
       print("done")            
-    },
-    error = function(cond) {
-      createDocument(document=list(makeModelId=makeModel$makeModelId, type="price_vs_miles", error=TRUE), carplotsAnalysisService=service)
-    },
-    warning=function(cond) {},
-    finally = {}
-    );
+    #},
+    #error = function(cond) {      
+    #  createDocument(document=list(makeModelId=makeModel$makeModelId, type="price_vs_miles", error=TRUE), carplotsAnalysisService=service)
+    #},
+    #warning=function(cond) {},
+    #finally = {}
+    #);
     
     
   }

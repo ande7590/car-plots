@@ -1,10 +1,15 @@
 source('~/workspace/car-plots/carplots-analysis/src/main/R/carplotsScraperService.R')
 source('~/workspace/car-plots/carplots-analysis/src/main/R/analysisFunctions.R')
-.jinit(parameters="-Xmx8196m")
+.jinit(parameters=c("-XX:-LoopUnswitching", "-Xmx4096m", "-XX:+UseG1GC", "-XX:+UseCompressedStrings", "-XX:+AggressiveOpts"))
 carplots.jService <- new(serviceClassName)
 setDocumentStore("http://localhost:5984/carplots", carplots.jService)
 
-carplots.buildAndStorePlots(carplots.jService)
+args <- commandArgs(trailingOnly = TRUE)
+for (i in 1:length(args)) {  
+  makeName <- args[i];
+  print(paste("Beginning work on ", makeName))
+  carplots.buildAndStorePlots(carplots.jService, makeName)  
+}
 
 #carplots.makeModels <- getMakeModels(carplots.jService)
 #carplots.locations <- getSearchLocations(carplots.jService)
