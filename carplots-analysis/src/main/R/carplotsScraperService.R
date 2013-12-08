@@ -89,64 +89,14 @@ getScraperRuns <- function (carplotsAnalysisService) {
   rbindlist(lapply(scraperRunsArray, getScraperRunsDataTable))
 }
 
-getImportedIterator <- function (carplotsAnalysisService, makeModelId=NULL, zipcode=NULL, scraperRunId=NULL) {
-  
-  iter <- NULL
-  if (!is.null(makeModelId) && !is.null(zipcode) && !is.null(scraperRunId)) {
-    iter <- .jcall(carplotsAnalysisService@jService, returnSig="Ljava/util/Iterator;", method="iterateImported", 
-                   .jlong(makeModelId), as.character(zipcode), .jlong(scraperRunId))
-  }
-  else if (!is.null(makeModelId) && !is.null(zipcode)) {
-    iter <- .jcall(carplotsAnalysisService@jService, returnSig="Ljava/util/Iterator;", method="iterateImported", 
-                   .jlong(makeModelId), as.character(zipcode))
-  }
-  else if (!is.null(makeModelId) && !is.null(scraperRunId)) {
-    iter <- .jcall(carplotsAnalysisService@jService, returnSig="Ljava/util/Iterator;", method="iterateImported", 
-                   .jlong(makeModelId), .jlong(scraperRunId))
-  }
-  else if (!is.null(makeModelId)) {
-    iter <- .jcall(carplotsAnalysisService@jService, returnSig="Ljava/util/Iterator;", method="iterateImported", 
-                   .jlong(makeModelId))
-  }
-  else {
-    stop("Unhandled argument combination")
-  }
-  iter
-}
-
-getImportedFast <- function(jIterator, carplotsAnalysisService) {
-  jArr <- .jcall(carplotsAnalysisService@jService, "[Ljava/lang/Object;", "fastIter", jIterator)
+getImported <- function(makeModelId, carplotsAnalysisService) {
+  jArr <- .jcall(carplotsAnalysisService@jService, "[Ljava/lang/Object;", "getImported", .jlong(makeModelId))
   print("Creating data table...")
   colNames <- c("importedId", "listingId", "miles", "price", "year", "engineId", "run_yr", "run_qtr")
   dt <- data.table(matrix(sapply(jArr, .jevalArray), ncol=length(colNames), byrow=TRUE))
   setnames(dt, colNames)
   setkey(dt, "year")
   dt
-}
-
-#slow! probably should use getImportedFast
-getImported <- function (jIterator, carplotsAnalysisService) {  
-  
-  getImportedDataTable <- function(imp) {
-    imp <- .jcast(imp, "com/carplots/persistence/scraper/entities/Imported")
-    data.table (
-      importedId = .jcall(imp, returnSig="J", "getImportedId"),
-      listingId = .jcall(.jcall(imp, returnSig="Ljava/lang/Long;", "getListingId"), "J", "longValue"),
-      miles = .jcall(.jcall(imp, returnSig="Ljava/lang/Integer;", "getMiles"), "I", "intValue"),
-      price = .jcall(.jcall(imp, returnSig="Ljava/lang/Integer;", "getPrice"), "I", "intValue"),
-      year = .jcall(.jcall(imp, returnSig="Ljava/lang/Integer;", "getCarYear"), "I", "intValue"),
-      engineId = .jcall(carplotsAnalysisService@jService, returnSig="J", "getNearestEngineId", imp)
-    );
-  }
-  
-  rows <- c()
-  while (.jcall(jIterator, "Z", "hasNext")) {    
-    rows <- c(rows, list(getImportedDataTable(
-      .jcall(jIterator, "Ljava/lang/Object;", "next"))));
-  }
-  
-  
-  rbindlist(rows)
 }
 
 setDocumentStore <- function(docStoreURL, carplotsAnalysisService) {  

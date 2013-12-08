@@ -35,6 +35,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.inject.persist.Transactional;
 
 public class CarplotsAnalysisServiceImpl implements CarplotsAnalysisService {
 	
@@ -72,50 +73,22 @@ public class CarplotsAnalysisServiceImpl implements CarplotsAnalysisService {
 	}
 	
 	@Override
+	@Transactional
 	public Collection<MakeModel> getMakeModels() {				
 		return asNewLinkedList(makeModelDao.iterateAll());
 	}
 
 	@Override
+	@Transactional
 	public Collection<Location> getSearchLocations() {
 		return asNewLinkedList(locationDao.iterateSearchLocations());
 	}
 
 	@Override
+	@Transactional
 	public Collection<ScraperRun> getScraperRuns() {
 		return asNewLinkedList(scraperRunDao.iterateAll());
-	}
-
-	@Override
-	public Iterator<Imported> iterateImported(long makeModelId) {
-		return importedDao.iterateByMakeModelId(makeModelId);
-	}
-
-	@Override
-	public Iterator<Imported> iterateImported(long makeModelId, String zipcode) {
-		return importedDao.iterateByMakeModelId(makeModelId, zipcode);
-	}
-
-	@Override
-	public Iterator<Imported> iterateImported(long makeModelId,
-			long scraperRunId) {
-		return importedDao.iterateByMakeModelId(makeModelId, scraperRunId);
-	}
-
-	@Override
-	public Iterator<Imported> iterateImported(long makeModelId, String zipcode,
-			long scraperRunId) {
-		return importedDao.iterateByMakeModelId(makeModelId, zipcode, scraperRunId);
-	}
-	
-	//guava apparently doesn't have this...
-	private static <E> LinkedList<E> asNewLinkedList(final Iterator<? extends E> iter) {
-		final LinkedList<E> linkedList = new LinkedList<E>();
-		while (iter.hasNext()) {
-			linkedList.add(iter.next());
-		}
-		return linkedList;
-	}
+	}	
 
 	@Override
 	public Iterator<CarModel> iterateCarModel(String carModelQuery) {
@@ -132,7 +105,111 @@ public class CarplotsAnalysisServiceImpl implements CarplotsAnalysisService {
 					((imported == null)? "NULL" : imported.getImportedId()));
 		}		
 		return nearestEngineId;
+	}		
+	
+	@Override
+	public String updateDocument(String document) {		
+		String message = "ERROR: <null>";
+		try {
+			checkDocStore();
+			message = docStore.updateDocument(document);
+		} catch (Exception e) {
+			message = "ERROR: " + 
+					((e.getMessage() == null)? "<null>" : e.getMessage());
+		}
+		return message;
 	}
+
+	@Override
+	public String createDocument(String document) {
+		String message = "ERROR: <null>";
+		try {
+			checkDocStore();
+			message = docStore.createDocument(document);
+		} catch (Exception e) {
+			message = "ERROR: " + 
+					((e.getMessage() == null)? "<null>" : e.getMessage());
+		}
+		return message;
+	}
+	
+	private void checkDocStore() {
+		if (docStore == null) 
+			throw new RuntimeException("Must set document store");
+	}
+
+	@Override
+	public void setDocumentStore(String documentStoreURL) {
+		docStore = new DocumentStoreCouchDBStringImpl(documentStoreURL);		
+	}
+
+	@Transactional
+	@SuppressWarnings("deprecation")
+	@Override
+	public Object[] getImported(long makeModelId) throws Exception {
+		int arraySize = initialArraySize;
+		
+		final Iterator<Imported> iterator = importedDao.iterateByMakeModelId(makeModelId);
+				
+		final Map<Long, ScraperRun> scraperRunLookup = new HashMap<Long, ScraperRun>();
+		for (ScraperRun run : getScraperRuns()) {
+			scraperRunLookup.put(run.getScraperRunId(), run);
+		}
+		
+		Object[] buffer = new Object[initialArraySize];
+		final Calendar cal = Calendar.getInstance();
+		int count = 0;
+		while (iterator.hasNext()) {
+			if (count == Integer.MAX_VALUE) {
+				throw new Exception("Integer overflow, too much data");
+			}
+			if (count == arraySize) {
+				if (arraySize >= Integer.MAX_VALUE >> 1) {
+					arraySize = Integer.MAX_VALUE;
+				}
+				else {
+					arraySize *= 2;
+				}				
+				Object[] newBuffer = new Object[arraySize];
+				System.arraycopy(buffer, 0, newBuffer, 0, buffer.length);
+				buffer = newBuffer;
+			}			
+			final Imported i = iterator.next();
+			final long importedId = i.getImportedId();
+			final Long listingId = i.getListingId();
+			final Integer miles = i.getMiles();
+			final Integer price = i.getPrice();
+			final Integer carYear = i.getCarYear();
+			final long nearestEngineId = getNearestEngineId(i);
+			final Long scraperRunId = i.getScraperRunId();
+			final ScraperRun scraperRun = scraperRunLookup.get(scraperRunId);
+						
+			if (listingId != null && miles != null && price != null && carYear != null && 
+					scraperRun != null) {				
+				cal.setTime(scraperRun.getScraperRunDt());
+				buffer[count] = new long[]{
+						importedId,
+						listingId,
+						(long)miles,
+						(long)price,
+						(long)carYear,
+						nearestEngineId,
+						cal.get(Calendar.YEAR),
+						(cal.get(Calendar.MONTH)) / 4
+				};		
+			}				
+			count++;
+			if (count % 1000 == 0) {
+				System.out.format("Processed %d\n", count);
+			}
+		}
+		
+		//R chokes on null values and we need to use lapply() to combine results.		
+		final Object[] returnVal = new Object[count];
+		System.arraycopy(buffer, 0, returnVal, 0, count);
+		
+		return returnVal;
+	}	
 	
 	private long doGetNearestEngineId(Imported imported) {
 		CarEngine nearestEngine = null;
@@ -217,107 +294,13 @@ public class CarplotsAnalysisServiceImpl implements CarplotsAnalysisService {
 		return (nearestEngine == null)? invalidEngineId : nearestEngine.getCarEngineId();
 	}
 	
-	@Override
-	public String updateDocument(String document) {		
-		String message = "ERROR: <null>";
-		try {
-			checkDocStore();
-			message = docStore.updateDocument(document);
-		} catch (Exception e) {
-			message = "ERROR: " + 
-					((e.getMessage() == null)? "<null>" : e.getMessage());
-		}
-		return message;
-	}
 
-	@Override
-	public String createDocument(String document) {
-		String message = "ERROR: <null>";
-		try {
-			checkDocStore();
-			message = docStore.createDocument(document);
-		} catch (Exception e) {
-			message = "ERROR: " + 
-					((e.getMessage() == null)? "<null>" : e.getMessage());
+	//guava apparently doesn't have this...
+	private static <E> LinkedList<E> asNewLinkedList(final Iterator<? extends E> iter) {
+		final LinkedList<E> linkedList = new LinkedList<E>();
+		while (iter.hasNext()) {
+			linkedList.add(iter.next());
 		}
-		return message;
+		return linkedList;
 	}
-	
-	private void checkDocStore() {
-		if (docStore == null) 
-			throw new RuntimeException("Must set document store");
-	}
-
-	@Override
-	public void setDocumentStore(String documentStoreURL) {
-		docStore = new DocumentStoreCouchDBStringImpl(documentStoreURL);		
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public Object[] fastIter(Iterator<Imported> iterator) throws Exception {
-		int arraySize = initialArraySize;
-		
-				
-		final Map<Long, ScraperRun> scraperRunLookup = new HashMap<Long, ScraperRun>();
-		for (ScraperRun run : getScraperRuns()) {
-			scraperRunLookup.put(run.getScraperRunId(), run);
-		}
-		
-		Object[] buffer = new Object[initialArraySize];
-		final Calendar cal = Calendar.getInstance();
-		int count = 0;
-		while (iterator.hasNext()) {
-			if (count == Integer.MAX_VALUE) {
-				throw new Exception("Integer overflow, too much data");
-			}
-			if (count == arraySize) {
-				if (arraySize >= Integer.MAX_VALUE >> 1) {
-					arraySize = Integer.MAX_VALUE;
-				}
-				else {
-					arraySize *= 2;
-				}				
-				Object[] newBuffer = new Object[arraySize];
-				System.arraycopy(buffer, 0, newBuffer, 0, buffer.length);
-				buffer = newBuffer;
-			}			
-			final Imported i = iterator.next();
-			final long importedId = i.getImportedId();
-			final Long listingId = i.getListingId();
-			final Integer miles = i.getMiles();
-			final Integer price = i.getPrice();
-			final Integer carYear = i.getCarYear();
-			final long nearestEngineId = getNearestEngineId(i);
-			final Long scraperRunId = i.getScraperRunId();
-			final ScraperRun scraperRun = scraperRunLookup.get(scraperRunId);
-						
-			if (listingId != null && miles != null && price != null && carYear != null && 
-					scraperRun != null) {				
-				cal.setTime(scraperRun.getScraperRunDt());
-				buffer[count] = new long[]{
-						importedId,
-						listingId,
-						(long)miles,
-						(long)price,
-						(long)carYear,
-						nearestEngineId,
-						cal.get(Calendar.YEAR),
-						(cal.get(Calendar.MONTH)) / 4
-				};		
-			}				
-			count++;
-			if (count % 1000 == 0) {
-				System.out.format("Processed %d\n", count);
-			}
-		}
-		
-		//R chokes on null values and we need to use lapply() to combine results.		
-		final Object[] returnVal = new Object[count];
-		System.arraycopy(buffer, 0, returnVal, 0, count);
-		
-		return returnVal;
-	}
-	
-	
 }

@@ -18,13 +18,7 @@ public interface CarplotsAnalysisService {
 	Collection<Location> getSearchLocations();
 	Collection<ScraperRun> getScraperRuns();
 	
-	Iterator<Imported> iterateImported(long makeModelID);
-	Iterator<Imported> iterateImported(long makeModelID, String zipcode);
-	Iterator<Imported> iterateImported(long makeModelID, long scraperRunId);
-	Iterator<Imported> iterateImported(long makeModelID, 
-			String zipcode, long scraperRunId);
-	
-	Object[] fastIter(Iterator<Imported> iterator) throws Exception;
+	Object[] getImported(long makeModelId) throws Exception;
 	
 	Iterator<CarModel> iterateCarModel(String carModelQuery);
 	

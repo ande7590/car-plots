@@ -3,12 +3,14 @@ carplots.MILEAGE_MAX <- 200000 #maximum mileage of record that we will use in an
 carplots.NUM_RESAMPLE <- 100
 carplots.MINIMUM_DATASET_SIZE <- 50
 carplots.MINIMUM_MILEAGE_BINS <- 10
-carplots.IQR_OUTLIER_FACTOR = 3.5
+carplots.IQR_OUTLIER_FACTOR = 2.0
 
 carplots.clean <- function(dt) {
   dt <- dt[which(dt$year >= 1914 & dt$year <= 2020 & dt$miles > 1 & dt$miles < carplots.MILEAGE_MAX & dt$engineId > -1), ]
-  priceIQR <- IQR(dt$price)
-  dt <- dt[which(dt$price > 300 & dt$price <=  carplots.IQR_OUTLIER_FACTOR * priceIQR), ]
+  outlier_threshold <- quantile(dt$price)[4] + carplots.IQR_OUTLIER_FACTOR * IQR(dt$price)
+  if (priceIQR > 0) {
+    dt <- dt[which(dt$price > 300 & dt$price <= outlier_threshold), ]
+  }
   dt
 }
 
@@ -48,10 +50,14 @@ carplots.decreasing_taylor_smoother <- function(xy_pair) {
   xy_pair  
 }
 
-carplots.create <- function(dt, plot=FALSE, plot_overlay=FALSE, process_fn=function(x) {}) {  
+carplots.create <- function(dt, plot=FALSE, plot_overlay=FALSE, process_fn=function(x) {}, ignoreError=FALSE) {  
   
   if (is.null(dt$miles_bin) || is.null(dt$price_aggregate)) {
-    stop("Data table must have both miles_bin and price_aggregate columns, one or both was missing.")
+    if (ignoreError == TRUE) {
+      return 
+    } else {
+      stop("Data table must have both miles_bin and price_aggregate columns, one or both was missing.")
+    }
   }
   
   if (plot == TRUE && plot_overlay == FALSE) {
@@ -111,7 +117,7 @@ carplots.apply <- function(dt, binResolution=5000, price_aggregate_fn=mean,
     dt_bin
   }    
   each_engine <- function(dt_bin) {    
-    dt_bin <- cbind(dt_bin, binResolution * cut(dt_bin$miles, mileageBins, labels=FALSE))
+    dt_bin <- cbind(dt_bin, binResolution * cut(dt_bin$miles, binCuts, labels=FALSE))
     setname_lastcol(dt_bin, "miles_bin")
     Reduce(rbind, by(dt_bin, dt_bin$miles_bin, price_aggregate_fn_wrapper))
   }
@@ -132,22 +138,35 @@ carplots.buildAndStorePlots <- function(service) {
   carplots.makeModels <- getMakeModels(service)
   for (i in 1:nrow(carplots.makeModels)) {
     makeModel <- carplots.makeModels[i]
-    print(paste(c("fetching ", makeModel), collapse=" "))
-    iter <- getImportedIterator(makeModelId=makeModel$makeModelId, service)
-    dt <- getImportedFast(iter, service)
-    print("creating plot")
-    dt <- carplots.clean(dt)
-    dt <- carplots.apply(dt)
-    carplots.create(dt, process_fn=function(car_dt, pt_data) {
-      print("storing plot")
-      plot_document <- list(
-          makeModelId=makeModel$makeModelId,
-          collection_years=unique(dt$run_yr),
-          car_years = unique(car_dt$year),
-          car_engine = unique(car_dt$engineId),
-          point_data=pt_data);
-      createDocument(document=plot_document, carplotsAnalysisService=service)
-    })        
-    print("done")
+    out <- tryCatch( 
+    {
+      print(paste(c("fetching ", makeModel), collapse=" "))
+      dt <- getImported(makeModelId=makeModel$makeModelId, service)
+      print("creating plot")
+      dt <- carplots.clean(dt)
+      if (nrow(dt) > 0) {
+        dt <- carplots.apply(dt)
+        carplots.create(dt, process_fn=function(car_dt, pt_data) {
+          print("storing plot")
+          plot_document <- list(
+            makeModelId=makeModel$makeModelId,
+            type="price_vs_miles",
+            collection_years=unique(dt$run_yr),
+            car_years = unique(car_dt$year),
+            car_engine = unique(car_dt$engineId),
+            point_data=pt_data);
+          createDocument(document=plot_document, carplotsAnalysisService=service)
+        })        
+      }
+      print("done")            
+    },
+    error = function(cond) {
+      createDocument(document=list(makeModelId=makeModel$makeModelId, type="price_vs_miles", error=TRUE), carplotsAnalysisService=service)
+    },
+    warning=function(cond) {},
+    finally = {}
+    );
+    
+    
   }
 }

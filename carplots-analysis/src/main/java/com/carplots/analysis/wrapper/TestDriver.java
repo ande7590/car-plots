@@ -13,9 +13,7 @@ public class TestDriver {
 		CarplotsAnalysisServiceImpl service = null;
 		try {
 			service = (new CarplotsAnalysisWrapper()).getCarplotsAnalysisService();
-			final Iterator<Imported> importedIter = service.iterateImported(10);
-			service.fastIter(importedIter);
-			
+			service.getImported(10);
 		} catch (Exception e) {
 			System.out.println("ERROR creating/getting service");
 			e.printStackTrace();
