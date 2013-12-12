@@ -53,7 +53,7 @@ carplots.decreasing_taylor_smoother <- function(xy_pair) {
   xy_pair  
 }
 
-carplots.create <- function(dt, plot=FALSE, plot_overlay=FALSE, process_fn=function(x) {}, ignoreError=FALSE) {  
+carplots.create <- function(dt, plot=FALSE, plot_overlay=FALSE, process_fn=function(x) {}, ignoreError=FALSE, byRunYear=FALSE) {  
   
   if (is.null(dt$miles_bin) || is.null(dt$price_aggregate)) {
     if (ignoreError == TRUE) {
@@ -66,16 +66,23 @@ carplots.create <- function(dt, plot=FALSE, plot_overlay=FALSE, process_fn=funct
   if (plot == TRUE && plot_overlay == FALSE) {
     carplots.plot_default();
   }
-    
+	
+	#use a rainbow for diagnostic plots, i.e. the graph should look like a rainbow
+	#since the price should decrease (w/ everything else held constant) with the car's year.
+	#i.e. the partial derivative of price w.r.t the car's year is a decreasing function
   colors <- rainbow(50);
+
+	#some globals for the processing functions below
   carplots_legend_desc <<- c()
   carplots_col_iter <<- 1;
-  by(dt, dt$year, function(dt_year) {
-    by(dt_year, dt_year$engineId, function(dt_engine) {
-      if ( nrow(dt_engine) >= carplots.MINIMUM_DATASET_SIZE &&
-          length(unique(dt_engine$miles_bin)) >= carplots.MINIMUM_MILEAGE_BINS) {        
-        dt_engine <- dt_engine[miles <= carplots.MILEAGE_MAX, ]        
-        car_pts <- dt_engine[, unique(price_aggregate), by=miles_bin]          
+
+	#the main processing function, once we have sliced and diced the 
+	#car by year, engine, etc, we call this to generate a plot (or points)
+	process_car_plot <- function(dt_car) {
+      if ( nrow(dt_car) >= carplots.MINIMUM_DATASET_SIZE &&
+          length(unique(dt_car$miles_bin)) >= carplots.MINIMUM_MILEAGE_BINS) {        
+        dt_car <- dt_car[miles <= carplots.MILEAGE_MAX, ]        
+        car_pts <- dt_car[, unique(price_aggregate), by=miles_bin]          
         car_lowess <- lowess(car_pts$miles_bin, car_pts$V1)              
         #add bogus point onto end so decreasing_taylor_smoother will extrapolate if necessary
         car_lowess$x <- c(car_lowess$x, carplots.MILEAGE_MAX + 1)
@@ -84,12 +91,32 @@ carplots.create <- function(dt, plot=FALSE, plot_overlay=FALSE, process_fn=funct
         if (plot) {
           lines(car_lowess$x, car_lowess$y , col=colors[carplots_col_iter])
           carplots_col_iter <<- carplots_col_iter + 1
-          carplots_legend_desc <<- c(carplots_legend_desc, paste(dt_engine$year[1]), collapse=" "); 
+          carplots_legend_desc <<- c(carplots_legend_desc, paste(dt_car$year[1]), collapse=" "); 
         } else {
-          process_fn(dt_engine, car_lowess)
+					#callback for external function to process this piece of sliced data (e.g. store it).
+					#re-slicing the data table returned (below) by the outer-loops is expensive
+          process_fn(dt_car, car_lowess)
         }
-        car_lowess
+        car_lowess #<-outer-loops return an aggregated data table with
       }      
+	}
+    
+	
+	#slice and dice
+	#for sure we will use the car year and engine as strata
+  
+  #slice on car year
+  by(dt, dt$year, function(dt_year) {
+    #slice each car by it's engine (i.e. different engines in same car cost different amounts)
+    by(dt_year, dt_year$engineId, function(dt_engine) {
+      if (byRunYear == TRUE) {
+        #slice by which year we collected the data too
+        by(dt_engine, dt_engine$run_yr, function(dt_run_yr) {
+          process_car_plot(dt_run_yr);
+        });
+      } else {
+        process_car_plot(dt_engine);
+		  }
     });
   });
   
@@ -153,12 +180,12 @@ carplots.buildAndStorePlots <- function(service, makeFilter) {
       print(paste("creating plot from ", nrow(dt), " data points"))
       if (nrow(dt) > 0) {
         dt <- carplots.apply(dt)
-        carplots.create(dt, process_fn=function(car_dt, pt_data) {
+        carplots.create(dt, byRunYear=TRUE, process_fn=function(car_dt, pt_data) {
           print("storing plot")
           plot_document <- list(
             makeModelId=makeModel$makeModelId,
             type="price_vs_miles",
-            collection_years=unique(dt$run_yr),
+            collection_years=unique(car_dt$run_yr),
             car_years = unique(car_dt$year),
             car_engine = unique(car_dt$engineId),
             point_data=pt_data);

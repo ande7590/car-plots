@@ -5,10 +5,11 @@ source('~/workspace/car-plots/carplots-analysis/src/main/R/analysisFunctions.R')
 #init JVM and document store
 .jinit(parameters=c("-XX:-LoopUnswitching", "-Xmx8096m", "-XX:+UseG1GC", "-XX:+UseCompressedStrings", "-XX:+AggressiveOpts"))
 carplots.jService <- new(serviceClassName)
-setDocumentStore("http://localhost:5984/carplots", carplots.jService)
+setDocumentStore("http://localhost:5984/carplots_staging", carplots.jService)
 
 #If invoked via command line, read and process command line arguments
 args <- commandArgs(trailingOnly = TRUE)
+#args <- c('Acura')
 if (length(args) > 0) {
   for (i in 1:length(args)) {  
     makeName <- args[i];
