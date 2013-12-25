@@ -39,21 +39,31 @@ carplots.plot_default <- function() {
 # and value of the previous point (i.e. a known "good" point)
 carplots.decreasing_taylor_smoother <- function(xy_pair) {  
   if (length(xy_pair$x) > 1) {       
-    last_delta <- 0
+    delta_1 <- 0
+    delta_2 <- 0
+    gamma <- 1
     for(i in 2:(length(xy_pair$x))) {     
       #if a point isn't decreasing
+      epsilon <- xy_pair$x[i] - xy_pair$x[i - 1]
+      theta <- xy_pair$y[i] - xy_pair$y[i - 1]
       if (xy_pair$y[i-1] < xy_pair$y[i]) {
         #take the minimum of the last point, or (hopefully) a taylor series approximation what the value
-        #should be
-        xy_pair$y[i] <- min(xy_pair$y[i-1], xy_pair$y[i-1] + .5 * (xy_pair$x[i] - xy_pair$x[i - 1]) * last_delta  )
+        #should be            
+        taylor_approx <- xy_pair$y[i-1] + 
+                          (epsilon * delta_1) +
+                          (epsilon^2 * .5 * gamma)
+        xy_pair$y[i] <- min(xy_pair$y[i-1], taylor_approx)       
       }
-      last_delta <- (xy_pair$y[i] - xy_pair$y[i - 1]) / (xy_pair$x[i] - xy_pair$x[i - 1])             
-    }      
+      delta_2 <- delta_1
+      delta_1 <- theta / epsilon 
+      gamma <- (delta_2 - delta_1) / epsilon
+    }
   }
   xy_pair  
 }
 
-carplots.create <- function(dt, plot=FALSE, plot_overlay=FALSE, process_fn=function(x) {}, ignoreError=FALSE, byRunYear=FALSE) {  
+carplots.create <- function(dt, plot=FALSE, plot_overlay=FALSE, process_fn=function(x) {}, 
+                            ignoreError=FALSE, byRunYear=FALSE) {  
   
   if (is.null(dt$miles_bin) || is.null(dt$price_aggregate)) {
     if (ignoreError == TRUE) {
@@ -95,6 +105,7 @@ carplots.create <- function(dt, plot=FALSE, plot_overlay=FALSE, process_fn=funct
         } else {
 					#callback for external function to process this piece of sliced data (e.g. store it).
 					#re-slicing the data table returned (below) by the outer-loops is expensive
+          
           process_fn(dt_car, car_lowess)
         }
         car_lowess #<-outer-loops return an aggregated data table with
@@ -119,13 +130,6 @@ carplots.create <- function(dt, plot=FALSE, plot_overlay=FALSE, process_fn=funct
 		  }
     });
   });
-  
-  #if (plot == TRUE) {
-  #  legend("topright", legend = carplots_legend_desc,
-  #         text.width = strwidth("1,000,000"),
-  #         xjust = 1, yjust = 1, pch=1,
-  #         title = "Plots", col=colors[1:length(carplots_legend_desc)], cex=.75, ncol=3); 
-  #}
 }
 
 carplots.apply <- function(dt, binResolution=5000, price_aggregate_fn=mean, 
@@ -163,7 +167,7 @@ carplots.apply <- function(dt, binResolution=5000, price_aggregate_fn=mean,
   retVal
 }
 
-carplots.buildAndStorePlots <- function(service, makeFilter) {
+carplots.buildAndStorePlots <- function(service, makeFilter, byRunYear=FALSE) {
   
   carplots.makeModels <- getMakeModels(service)  
   makesToProcess <- carplots.makeModels[makeName == makeFilter, ]
@@ -172,35 +176,24 @@ carplots.buildAndStorePlots <- function(service, makeFilter) {
   
   for (i in 1:nrow(makesToProcess)) {
     makeModel <- makesToProcess[i]
-    #out <- tryCatch( 
-    #{
-      print(paste(c("fetching ", makeModel), collapse=" "))
-      dt <- getImported(makeModelId=makeModel$makeModelId, service)      
-      dt <- carplots.clean(dt)
-      print(paste("creating plot from ", nrow(dt), " data points"))
-      if (nrow(dt) > 0) {
-        dt <- carplots.apply(dt)
-        carplots.create(dt, byRunYear=TRUE, process_fn=function(car_dt, pt_data) {
-          print("storing plot")
-          plot_document <- list(
-            makeModelId=makeModel$makeModelId,
-            type="price_vs_miles",
-            collection_years=unique(car_dt$run_yr),
-            car_years = unique(car_dt$year),
-            car_engine = unique(car_dt$engineId),
-            point_data=pt_data);
-          createDocument(document=plot_document, carplotsAnalysisService=service)
-        })        
-      }
-      print("done")            
-    #},
-    #error = function(cond) {      
-    #  createDocument(document=list(makeModelId=makeModel$makeModelId, type="price_vs_miles", error=TRUE), carplotsAnalysisService=service)
-    #},
-    #warning=function(cond) {},
-    #finally = {}
-    #);
-    
-    
+    print(paste(c("fetching ", makeModel), collapse=" "))
+    dt <- getImported(makeModelId=makeModel$makeModelId, service)      
+    dt <- carplots.clean(dt)
+    print(paste("creating plot from ", nrow(dt), " data points"))
+    if (nrow(dt) > 0) {
+      dt <- carplots.apply(dt)
+      carplots.create(dt, byRunYear=byRunYear, process_fn=function(car_dt, pt_data) {
+        print("storing plot")
+        plot_document <- list(
+          makeModelId=makeModel$makeModelId,
+          type="price_vs_miles",
+          collection_years=unique(car_dt$run_yr),
+          car_years = unique(car_dt$year),
+          car_engine = unique(car_dt$engineId),
+          point_data=pt_data);
+        createDocument(document=plot_document, carplotsAnalysisService=service)
+      })
+    }
+    print("done")            
   }
 }

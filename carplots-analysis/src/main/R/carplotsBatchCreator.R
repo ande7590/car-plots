@@ -8,12 +8,13 @@ carplots.jService <- new(serviceClassName)
 setDocumentStore("http://localhost:5984/carplots_staging", carplots.jService)
 
 #If invoked via command line, read and process command line arguments
-args <- commandArgs(trailingOnly = TRUE)
 #args <- c('Acura')
+args <- commandArgs(trailingOnly = TRUE)
 if (length(args) > 0) {
-  for (i in 1:length(args)) {  
+  byRunYear = args[1] == "TRUE"
+  for (i in 2:length(args)) {  
     makeName <- args[i];
     print(paste("Beginning work on ", makeName))
-    carplots.buildAndStorePlots(carplots.jService, makeName)  
+    carplots.buildAndStorePlots(carplots.jService, makeName, byRunYear=byRunYear)  
   }
 }
