@@ -45,7 +45,6 @@ carplots.decreasing_taylor_smoother <- function(xy_pair) {
     for(i in 2:(length(xy_pair$x))) {     
       #if a point isn't decreasing
       epsilon <- xy_pair$x[i] - xy_pair$x[i - 1]
-      theta <- xy_pair$y[i] - xy_pair$y[i - 1]
       if (xy_pair$y[i-1] < xy_pair$y[i]) {
         #take the minimum of the last point, or (hopefully) a taylor series approximation what the value
         #should be            
@@ -53,9 +52,9 @@ carplots.decreasing_taylor_smoother <- function(xy_pair) {
                           (epsilon * delta_1) +
                           (epsilon^2 * .5 * gamma)
         xy_pair$y[i] <- min(xy_pair$y[i-1], taylor_approx)       
-      }
+      }      
       delta_2 <- delta_1
-      delta_1 <- theta / epsilon 
+      delta_1 <- (xy_pair$y[i] - xy_pair$y[i - 1]) / epsilon 
       gamma <- (delta_2 - delta_1) / epsilon
     }
   }
