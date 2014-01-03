@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<link rel='stylesheet' href='css/groupedAutoComplete.css'/>
+		<style>
+			.groupedAutoComplete li {
+				list-style-type: none;
+				cursor: pointer;
+			}
+
+			.groupedAutoComplete {
+				position: absolute;
+				outline: 1px solid blue;
+				width: 300px;
+			}
+
+			.iconMini {
+				display: inline-block;
+				height: 18px !important;
+				width: 18px !important;
+			}
+
+			.expandableItem .iconMini,
+			.expandableItem .iconMini {
+			}
+
+			.iconMini {
+				background: url('img/iconSetMini.png') -371px 0px;
+			}
+
+			.expandedItem .iconMini {
+				background: url('img/iconSetMini.png') -394px 0px;
+			}
+
+			.expandedItem {
+
+			}
+			.expanededItem .icon {
+
+			}
+
+			li.expandableItem ul.innerGroupList, 
+			li.expandableItem ul.innerGroupList li {
+				display: none;
+			}
+
+			li.expandedItem ul.innerGroupList, 
+			li.expandedItem ul.innerGroupList li {
+				display: block;
+			}
+		</style>
+		<script src="js/lib/jquery-1.8.2.js" type="text/javascript"></script>
+		<script src="js/lib/jquery-ui-1.9.1.custom.min.js" type="text/javascript"></script>
+		<script src="js/groupedAutoComplete.js" type="text/javascript"></script>
+	</head>
+	<body>
+		<div>
+			<input type='text' size="80" name="autocompleteField"/>
+		</div>
+
+		<br/><br/>
+		<div class="groupedAutoComplete">
+			<ul class="outerGroupList">
+				<li>
+					<div class="groupLabel searchItem"><div class="iconMini"></div>Top-Level 1</div>
+					<ul class="innerGroupList">
+						<li class='searchItem'>Babbaba Item 1</li>
+						<li class='searchItem'>Annada Item 1</li>
+						<li class='searchItem'>WowwAnna Item 1</li>
+						<li class='searchItem'>Annaba Item 1</li>
+						<li class='searchItem'>Item 1</li>
+					</ul>
+				</li>
+				<li>
+					<div class="groupLabel searchItem"><div class="iconMini"></div>Top-Level 2</div>
+					<ul class="innerGroupList">
+						<li class='searchItem'>Babbaba Item 2</li>
+						<li class='searchItem'>XZZo XZZo Item 2</li>
+						<li class='searchItem'>XZZo BItem 2</li>
+						<li class='searchItem'>Item 2</li>
+						<li class='searchItem'>Item 2</li>
+					</ul>
+				</li>
+				<li>
+					<div class="groupLabel searchItem"><div class="iconMini"></div>Top-Level 3</div>
+					<ul class="innerGroupList">
+						<li class='searchItem'>XZZo XZZo Item 3</li>
+						<li class='searchItem'>XZZo BItem 2</li>
+						<li class='searchItem'>Item 3</li>
+						<li class='searchItem'>Item 3</li>
+						<li class='searchItem'>Item 3</li>
+						<li class='searchItem'>Item 3</li>
+					</ul>
+				</li>
+				<li>
+					<div class="groupLabel searchItem"><div class="iconMini"></div>Top-Level 4</div>
+					<ul class="innerGroupList">
+						<li class='searchItem'>XZZo XZZodd Item 3</li>
+						<li class='searchItem'>XZZo BItem 4</li>
+						<li class='searchItem'>Item 4</li>
+						<li class='searchItem'>Item 4</li>
+						<li class='searchItem'>Item 4</li>
+					</ul>
+				</li>
+			</ul>
+		</div>
+	</body>
+</html>

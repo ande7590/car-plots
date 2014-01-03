@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<link rel='stylesheet' href='css/style.css'/>
+		<script type='text/javascript' src='script/lib/jquery-1.8.2.js'></script>
+		<script type='text/javascript' src='script/lib/jquery-ui-1.9.1.custom.min.js'></script>
+		<script type='text/javascript' src='script/carplots.js'></script>
+		<title>CarPlots Prototype</title>
+	</head>
+	<body>
+		<div class="container">
+			<header id="mainHeader">Car Plots</header>
+			<nav id="carSelection">
+				<form>
+
+					<div class="formGroup">
+						<label for="selectCar">
+							<div class="linkContainer">
+								<a href="javascript:void(0)" style="display: inline-block; padding: 3px 0 0px 18px;">
+									<div class="iconMini iconMiniStar" style="margin-left: -20px; margin-top: -3px; position: absolute; float:left;"></div>
+										Advanced Selection
+								</a>
+							</div>
+							Select Car
+						</label>
+						<div class="textBorder">
+							<div class="iconContainer">
+								<div class="icon iconCalloutLeft"></div>
+							</div>
+							<input class="infoBubbleItem" type="text" name="selectCar" placeholder="<Click Here>"/>
+						</div>
+					</div>
+
+					<div class="formGroup">
+						<label for="selectCar">Select Location</label>
+						<div class="textBorder">
+							<div class="iconContainer">
+								<div class="icon iconCalloutLeft"></div>
+							</div>
+							<input class="infoBubbleItem" type="text" name="selectLocation" placeholder="<Click Here>"/>
+						</div>
+					</div>
+
+					<div class="formButton">
+
+					</div>
+				</form>
+			</nav>
+			<div id="contentArea">
+				<div id="contentBorder">
+					
+				</div>
+			</div>
+		</div>
+	</body>
+</html>
