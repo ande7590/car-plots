@@ -3,11 +3,9 @@
 		<script src="js/jquery-1.10.2.js"></script>
 		<script src="js/carplots-service.js"></script>
 		<script type="text/javascript">
-			var factory = carplots.serviceFactory;
-			var config = factory.getServiceConfigurations();
-			var plotsService = factory.getService(config.plots);
-			var metadataService = factory.getService(config.metadata);
-			plotsService.plots(
+			var factory = carplots.service.factory;
+			var def = carplots.service.definitions.plots;
+			var plotsService = factory.createService(def);
 		</script>
 	</head>
 	<body>
