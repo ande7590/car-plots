@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html>
+	<head>                            
+        <script type="text/javascript" src="script/lib/jquery-ui-1.10/js/jquery-1.9.1.js"></script>
+        <script type="text/javascript" src="script/lib/jquery-ui-1.10/js/jquery-ui-1.10.1.custom.min.js"></script> 
+        <script type="text/javascript" src="script/lib/RGraph/libraries/RGraph.common.core.js" ></script>
+        <script type="text/javascript" src="script/lib/RGraph/libraries/RGraph.common.dynamic.js" ></script>
+        <script type="text/javascript" src="script/lib/RGraph/libraries/RGraph.common.key.js" ></script>
+        <script type="text/javascript" src="script/lib/RGraph/libraries/RGraph.line.js" ></script>
+                       
+        <!--<script type="text/javascript" src="script/widgets/"></script>-->
+        <style media="all" type="text/css">
+            
+            html, body 
+            {
+                margin: 0;
+                height: 100%;                
+            }
+            
+            
+            #bigGraph 
+            {
+                outline: 1px solid purple;
+            }
+            
+            .targetArea 
+            {      
+                position: relative;                    
+                outline: 1px solid red; 
+                height: 75%;                     
+            }
+            
+            .legend 
+            {                
+                position: absolute;
+                display: inline-block;                                
+                top: 20px;
+                right: 30px;
+                width: 250px;
+                border: 1px dashed #aaa;                
+                box-shadow: 3px 3px 2px #888;
+                background: #eee;
+                
+            }
+            .legend > ul 
+            {
+                list-style-type: square;
+                list-style-position: inside;
+                font-size: 1.5em;
+                margin: 10px 10px;
+                padding: 0 0;         
+            }         
+            
+            .legend li 
+            {                
+                position: relative;
+                vertical-align: top;  
+                padding-left: 5px;              
+            }
+            
+            .legend li:hover 
+            {                
+                outline: 1px dotted #555;
+                background: #FFFFF0;
+            }
+            
+            .legend .textArea 
+            {
+                display: inline-block;
+                vertical-align: top;
+                width: 125px;
+                color: black !important;
+            }
+            
+            .legend .accessoryArea 
+            {
+                display: inline-block;
+                vertical-align: top;
+                width: 70px;
+                text-align: right;
+            }
+            
+            .legend .text
+            {                
+                vertical-align: middle;
+                font-size: 12pt;
+            }
+            .legend .button
+            {            
+                vertical-align: middle;
+                font-size: 10pt;
+                text-decoration: underline;  
+                cursor: pointer; 
+                color: blue !important;          
+            }
+            
+            .dropMessage 
+            {                           
+                        
+            }                                                 
+            
+            .thumbnailSliderContainer 
+            {
+                outline: 1px solid red;
+                width: 100%;
+                height: 260px;                     
+            }
+            
+            .thumbnailSliderScroller
+            {                
+                overflow: auto;                            
+            }
+            
+            .thumbnailSliderItems
+            {
+                width: auto;
+                white-space: nowrap;
+                margin: 0;
+                padding: 10px 0;
+            }
+                        
+            .thumbnailSliderItems > li
+            {
+                height: 150px;
+                display: inline-block;
+                margin: 0px 10px;                
+                
+                list-style: none;                
+                background: #FFFFF0;
+                border-left: 1px solid #ccc;
+                border-top: 1px solid #ccc;                            
+                
+                cursor: move;
+                  
+                -moz-box-shadow: 3px 3px 2px #888;
+                -webkit-box-shadow: 3px 3px 2px #888;
+                box-shadow: 3px 3px 2px #888;
+            }
+                        
+            
+            .thumbnailSliderItems > li:hover
+            {                
+                -moz-box-shadow: 3px 3px 2px #555;
+                -webkit-box-shadow: 3px 3px 2px #555;
+                box-shadow: 4px 4px 4px #555;                                
+            }
+            
+            .thumbnailSlider .title 
+            {
+                float: right;
+                margin-bottom: -30px;
+                font-weight: bold;                            
+                height: 15px;                 
+                width: 300px;   
+                text-align: center;
+            }
+            
+            .thumbnailSlider .graph canvas
+            {
+                height: 100%;              
+            }
+            
+        </style>
+        <script type="text/javascript">
+            var canvasNumber = 0;
+            function createThumbNail(id) {                                          
+
+                var data = [Math.random() * 30,
+                    Math.random() * 25,
+                    Math.random() * 20,
+                    Math.random() * 15,
+                    Math.random() * 10,
+                    Math.random() * 5];
+
+                var $canvas = $("<canvas/>", {
+                    "id": ("thumbnailSliderItem" + (canvasNumber++)),
+                    "class": "thumbnailSliderItem"
+                }).data("chartData", data).data("thumbnailId", id);
+
+                var line = new RGraph.Line($canvas[0], data);
+
+                var chartProperties = {
+                    'chart.labels': [0, 25, 50, 75, 100, 125, 150],
+                    'chart.spline': true,
+                    'chart.xaxispos': 'bottom',
+                    'chart.linewidth': '.85',
+                    'chart.tickmarks': 'endcircle',
+                    'chart.background.grid.color': '#ccc',
+                    'chart.background.grid.autofit.numhlines': '6',
+                    'chart.background.grid.autofit.numvlines': '6',
+                    'chart.axis.color': '#555',
+                    'chart.title.xaxis.size': '1',
+                    'chart.title.yaxis.size': '1'
+                };
+
+                for (var k in chartProperties) {
+                    line.Set(k, chartProperties[k]);
+                }
+                                
+                line.Draw();
+
+                return $canvas;
+            }
+
+            function randByte() {
+                return Math.floor(Math.random()*255);
+            }
+            function randColor() {
+                var colStr = "#";
+                var bytes = [randByte(), randByte(), randByte()];
+                $(bytes).each(function () {
+                    var piece = this.toString(16);
+                    colStr += (piece.length == 1) ? "0" + piece
+                        : piece;
+                });
+                return {
+                    bytes: bytes,
+                    hex: colStr
+                };
+            }
+            function randVisibleColor() {
+                var generateColor = true;                
+                while (generateColor) {
+                    var color = randColor();
+                    generateColor = !isContrastSufficientOnWhite(.075, color.bytes);
+                }                
+                return color;
+            }
+
+            function isContrastSufficientOnWhite(contrastThreshold, bytes) {
+                var r = bytes[0];
+                var g = bytes[1];
+                var b = bytes[2];
+                var yiq = ((r * 299) + (b * 587) + (g * 114)) / 1000;
+                return (255 * contrastThreshold) <= yiq;
+            }
+
+            function clearCanvas(context) {
+                var canvas = context.canvas;
+                context.clearRect(0, 0, canvas.width, canvas.height);
+            }
+
+            var bigChartLine = null;
+            function createChart() {
+                var chartCanvas = document.getElementById("bigGraph");
+                bigChartLine = new RGraph.Line(chartCanvas, allData);
+                bigChartLine.Set('chart.spline', true);
+                bigChartLine.Set('chart.linewidth', 2);
+                
+            }
+
+            function refreshChart() {
+                
+                var allColors = [];
+                var allData = [];
+
+                for (var k in dataRegistery) {
+                    allColors.push(dataRegistery[k].color);
+                    allData.push(dataRegistery[k].points);
+                }
+
+                bigChartLine.original_data = allData;
+                bigChartLine.Set('chart.colors', allColors);
+
+                var chartCanvas = document.getElementById("bigGraph");
+                clearCanvas(chartCanvas.getContext("2d"));
+                bigChartLine.Draw();
+            }
+
+            var allData = [];
+            window.dataRegistery = {};  
+                      
+            function addToChart(id, data) {
+
+                if (typeof (dataRegistery[id]) === "undefined") {
+                    dataRegistery[id] = {
+                        id: id,
+                        points: data,
+                        color: randVisibleColor().hex
+                    };
+                    refreshChart();
+                    return dataRegistery[id];
+                }
+                else {
+                    return false;
+                } 
+            }
+
+            var legendItems = {};
+            function addToLegend(id) {
+                var data = dataRegistery[id];
+                var color = data.color;
+                var $elem = $("<li>", {
+                    "style": 'color: ' + color + ';'
+                }).html(getLegendHTML());
+                legendItems[id] = $elem;
+                $elem.find(".text").text(id);
+
+                $(".legend > ul").append($elem);
+                $elem.find(".button").click(function () {
+                    removeFromChart(id);
+                    removeFromLegend(id);
+                });
+            }            
+
+            function removeFromChart(id) {
+                var item = dataRegistery[id];
+                delete dataRegistery[id];
+                refreshChart();
+                return item;
+            }
+
+            function removeFromLegend(id) {
+                legendItems[id].remove();
+            }
+
+            function getLegendHTML() {
+                return [
+                    '<div class="textArea">',
+                        '<span class="text"></span>',
+                    '</div>',
+                    '<div class="accessoryArea">',
+                        '<span class="button">remove</span>',
+                     '</div>'].join('');
+            }
+                        
+            function updateLayout() {
+                updateTargetAreaSize();
+                updateCanvasSize();
+            }
+
+            function updateTargetAreaSize() {
+                var $tgt = $(".targetArea");
+                var $prnt = $tgt.parent();
+                $tgt.height($prnt.height() - 205);
+            }
+
+            function updateCanvasSize() {
+                var $tgt = $(".targetArea");
+                $("#bigGraph")
+                    .attr("height", $tgt.height())
+                    .attr("width", $tgt.width());
+                if (bigChartLine != null) {
+                    bigChartLine.Draw();
+                }
+            }
+
+            $(document).ready(function () {
+
+                createChart();
+                updateLayout();
+
+                window.thumbnailRegistry = {};
+                var thumbCount = 0;
+                $(".thumbnailSliderItems > li").each(function (idx, val) {
+                    var id = "thumbnail " + (++thumbCount);
+                    var thumbnail = createThumbNail(id);
+                    window.thumbnailRegistry[id] = thumbnail;
+
+                    $(val).find(".thumbnailSliderItemTitle").text(id);
+                    $(val).find(".graph").append(thumbnail);
+                });
+                $(".thumbnailSliderItems").sortable();
+                $(".targetArea").droppable({
+                    accept: ".thumbnailSliderItems > li",
+                    hoverClass: "targetAreaDropHover",
+                    drop: function (event, ui) {
+                        var $itm = ui.draggable.find(".thumbnailSliderItem")
+                        var chartData = $itm.data("chartData")
+                        var id = $itm.data("thumbnailId");
+
+                        if (addToChart(id, chartData) !== false) {
+                            addToLegend(id);
+                        };                        
+                    }
+                });
+
+                //@Event handlers
+                $(window).resize(function () {
+                    updateLayout();
+                });
+            });
+        </script>
+    </head>
+    <body>                
+        <div class="outer" style="height:200px;">
+            <div style="width: 100%; display: inline-block; ">
+                <div class="thumnailSliderContainer">
+                    <div class="thumbnailSliderScroller">
+                        
+                        <ul class="thumbnailSliderItems">
+                            <li>
+                                <div class="thumbnailSlider">
+                                    <div class="title">
+                                        <span class="thumbnailSliderItemTitle">
+                                            2005 Toyota Avalon
+                                        </span>
+                                    </div>                                
+                                    <div class="graph">
+                                    
+                                    </div>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="thumbnailSlider">
+                                    <div class="title">
+                                        <span class="thumbnailSliderItemTitle">
+                                            2005 Toyota Avalon
+                                        </span>
+                                    </div>                                
+                                    <div class="graph">
+                                    
+                                    </div>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="thumbnailSlider">
+                                    <div class="title">
+                                        <span class="thumbnailSliderItemTitle">
+                                            2005 Toyota Avalon
+                                        </span>
+                                    </div>                                
+                                    <div class="graph">
+                                    
+                                    </div>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="thumbnailSlider">
+                                    <div class="title">
+                                        <span class="thumbnailSliderItemTitle">
+                                            2005 Toyota Avalon
+                                        </span>
+                                    </div>                                
+                                    <div class="graph">
+                                    
+                                    </div>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="thumbnailSlider">
+                                    <div class="title">
+                                        <span class="thumbnailSliderItemTitle">
+                                            2005 Toyota Avalon
+                                        </span>
+                                    </div>                                
+                                    <div class="graph">
+                                    
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>        
+        <div class="targetArea">      
+            <div class="legend">
+                <ul>
+                    <!--<li>
+                        <div class="textArea">
+                            <span class="text">Test 1</span>
+                        </div>
+                        <div class="accessoryArea">
+                            <span class="button">remove</span>
+                        </div>                                                                        
+                     </li>                   -->
+                </ul>
+            </div>      
+            <canvas id="bigGraph" height="290" width="410">
+                    
+            </canvas>            
+        </div>
+    </body>
+</html>
