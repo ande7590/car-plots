@@ -1,0 +1,25 @@
+<html>
+	<head>
+		<script src="js/jquery-1.10.2.js"></script>
+		<script src="js/carplots-service.js"></script>
+		<script>
+			$(document).ready(function(){ 
+				debugger;
+				jQuery.ajax({
+						type: "GET",
+						url: "http://www.squareerror.com/metadata/makes",
+						dataType: "json",
+						success: function() {
+							debugger;
+						},
+						error: function() {
+							debugger;
+						}
+					});
+				});
+		</script>
+	</head>
+	<body>
+		<h1>scratch</h1>
+	</body>
+</html>

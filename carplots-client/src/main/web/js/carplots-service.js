@@ -4,35 +4,22 @@ if(typeof(carplots)==="undefined"){
 
 carplots.service = {};
 
-carplots.service.definitions = {
-	plots: {
-		name: "plots", 
-		url:"http://staging-carplots.squareerror.com:5984/",
-		methods: [
-		{
-			name: "plots",
-			methodType: "GET",
-			dataType: "jsonp",
-			location: "plots/",
-			args: [
-				":mmid/:yr",
-				":mmid/:yr/:st/:end/:eng"]
-		}]
-	},
-	metadata: {
-		name: "metadata", 
-		url:"http://staging-metadata.squareerror.com:5984/"
-	}
-};
-
 carplots.service.factory = {
 	createService: function(definition) {
 		return new carplots.service.RESTService(definition);
 	}
 };
 
+/*
+ * A RESTService takes a declarative (json) service definition
+ * and generates a proxy object for interacting with the RESTful
+ * service.  The actual object returned by the RESTService constructor
+ * is NOT an instance of RESTService.
+ */
 carplots.service.RESTService = function(serviceDefinition) {
 	this.serviceDefinition = serviceDefinition
+
+	//create and return a service proxy for the serviceDefinition.
 	return this._createService();
 }
 
@@ -58,20 +45,25 @@ carplots.service.RESTService.prototype = {
 	_createServiceMethod: function(methodDef) {
 		var svcDef = this.serviceDefinition;
 		var methodUrl = svcDef.url + methodDef.location;
-		var dataType = svcDef.dataType || "jsonp";
-		var methodArgs = svcDef.args;
+		var dataType = svcDef.dataType || "json";
+		var methodArgs = svcDef.args || [];
 		var methodArgParsers = [];
+
+		//arguments are passed into the service methods as an object,
+		//e.g. ":arg1/:arg2" in the method definition will expect 
+		//{arg1: "foo", arg2: "bar"} as the argument to the js function. 
 		for (var i=0; i<methodArgs; i++) {
+			//Create a parser to validate argument objects
 			methodArgParsers.push(this._createArgParser(methodArgs[i]));
 		}
-
+		//create the service method
 		var that = this;
 		return function(args, success_callback, error_callback) {
 			success_callback = success_callback || that._defaultSuccessHandler;
 			error_callback = error_callback || that._defaultErrorHandler;
 			jQuery.ajax({
 					type: "GET",
-					url: "http://staging-carplots.squareerror.com:5984/plots/1/2003",
+					url: methodUrl,
 					dataType: dataType,
 					success: success_callback,
 					error: error_callback
@@ -81,22 +73,37 @@ carplots.service.RESTService.prototype = {
 
 	_createArgParser: function(argDefinition) {
 		var that = this;
-		var validArgNames = {};
-		var argParts = argDefinition.replace(/:/g, "").split(/\//);
-		for(var i=0; i<argParts.length; i++) {
-			validArgNames[argParts[i]] = true;
-		}
-		return function(args) {
-			var numFound = 0;
-			for (argName in args) {
-				if (!argName in validArgNames) {
-					break;
-				} else {
-					numFound++;
-				}
+		var argParts = (argDefinition)? [] :
+		 	argDefinition.replace(/:/g, "").split(/\//);
+
+		//if there are arguments, create a parser
+		//specific to the argument names
+		if (argParts.length > 0) {
+			var validArgNames = {};
+			for(var i=0; i<argParts.length; i++) {
+				validArgNames[argParts[i]] = true;
 			}
-			return numFound == validArgNames.length;
+			return function(args) {
+				var numFound = 0;
+				for (argName in args) {
+					if (!argName in validArgNames) {
+						break;
+					} else {
+						numFound++;
+					}
+				}
+				return numFound == validArgNames.length;
+			}
 		}
+		//if there are no arguments, return a generic
+		//parser that expects zero arguments
+		else {
+			return this.
+		}
+	},
+
+	_emptyArgParser: function() {
+		return arguments.length == 0;
 	},
 
 	_defaultSuccessHandler: function() {
@@ -107,3 +114,63 @@ carplots.service.RESTService.prototype = {
 		alert("service error");
 	}
 }
+
+carplots.service.definitions = {
+	plots: {
+		name: "plots", 
+		url:"http://www.squareerror.com/carplots",
+		methods: [
+		{
+			name: "getPlots",
+			methodType: "GET",
+			dataType: "json",
+			location: "plots/",
+			args: [
+				":mmid/:yr",
+				":mmid/:yr/:st/:end/:eng"]
+		}]
+	},
+	metadata: {
+		name: "metadata", 		
+		url:"http://www.squareerror.com/metadata",
+		methods : [
+		{
+			name: "getMakeModels",
+			methodType: "GET",
+			dataType: "json",
+			location: "makeModels/",
+			args: [
+				"", 
+				":make"
+			]	
+		},
+		{
+			name: "getMakes",
+			methodType: "GET",
+			dataType: "json",
+			location: "makes/",
+			args: [
+				""
+			]	
+		},
+		{
+			name: "getEngines",
+			methodType: "GET",
+			dataType: "json",
+			location: "engines/",
+			args: [
+				":mmid",
+				":mmid/:yr"
+			]	
+		},
+		{
+			name: "getYears",
+			methodType: "GET",
+			dataType: "json",
+			location: "years/",
+			args: [
+				":mmid"
+			]	
+		}]
+	}
+};
