@@ -34,7 +34,7 @@ carplots.service.RESTService.prototype = {
 				throw new Error("Duplicate method definition: " + methodDef.name);
 			}
 			else if (methodDef.methodType == "GET") {
-				service[def.name] = this._createServiceMethod(methodDef);
+				service[methodDef.name] = this._createServiceMethod(methodDef);
 			} else {
 				throw new Error("Unsupported method: " + def.method);
 			}
@@ -44,7 +44,7 @@ carplots.service.RESTService.prototype = {
 
 	_createServiceMethod: function(methodDef) {
 		var svcDef = this.serviceDefinition;
-		var methodUrl = svcDef.url + methodDef.location;
+		var methodUrl = [svcDef.url, "/", methodDef.location].join('');
 		var dataType = svcDef.dataType || "json";
 		var methodArgs = svcDef.args || [];
 		var methodArgParsers = [];
@@ -59,7 +59,7 @@ carplots.service.RESTService.prototype = {
 		//create the service method
 		var that = this;
 		return function(args, success_callback, error_callback) {
-			success_callback = success_callback || that._defaultSuccessHandler;
+			success_callback = success_callback || that._defaultSuccesstionHandler;
 			error_callback = error_callback || that._defaultErrorHandler;
 			jQuery.ajax({
 					type: "GET",
@@ -71,8 +71,9 @@ carplots.service.RESTService.prototype = {
 		}
 	},
 
+	_addArgs: function(baseUrl, 
+
 	_createArgParser: function(argDefinition) {
-		var that = this;
 		var argParts = (argDefinition)? [] :
 		 	argDefinition.replace(/:/g, "").split(/\//);
 
@@ -98,7 +99,7 @@ carplots.service.RESTService.prototype = {
 		//if there are no arguments, return a generic
 		//parser that expects zero arguments
 		else {
-			return this.
+			return this._emptyArgParser;
 		}
 	},
 
@@ -116,8 +117,8 @@ carplots.service.RESTService.prototype = {
 }
 
 carplots.service.definitions = {
-	plots: {
-		name: "plots", 
+	carplots: {
+		name: "carplots", 
 		url:"http://www.squareerror.com/carplots",
 		methods: [
 		{

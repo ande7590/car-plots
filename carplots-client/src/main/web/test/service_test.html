@@ -1,14 +1,17 @@
 <html>
 	<head>
-		<script src="js/jquery-1.10.2.js"></script>
-		<script src="js/carplots-service.js"></script>
-		<script type="text/javascript">
-			var factory = carplots.service.factory;
-			var def = carplots.service.definitions.plots;
-			var plotsService = factory.createService(def);
-			debugger;
-		</script>
+		<style>
+			.service_result {
+				background: #ccc;
+				border: 1px solid #777;
+				margin: 5px 5px;
+			}
+		</style>
+		<script src="/js/jquery-1.10.2.js"></script>
+		<script src="/js/carplots-service.js"></script>
+		<script src="/test/service_test.js"></script>
 	</head>
 	<body>
+		<div id="testResults"></div>
 	</body>
 </html>
