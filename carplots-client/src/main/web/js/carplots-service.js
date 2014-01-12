@@ -42,17 +42,21 @@ carplots.service.RESTService.prototype = {
 		return service;
 	},
 
+	_addArgs: function(baseURL, args) {
+
+	},
+
 	_createServiceMethod: function(methodDef) {
 		var svcDef = this.serviceDefinition;
 		var methodUrl = [svcDef.url, "/", methodDef.location].join('');
 		var dataType = svcDef.dataType || "json";
-		var methodArgs = svcDef.args || [];
+		var methodArgs = methodDef.args || [];
 		var methodArgParsers = [];
 
 		//arguments are passed into the service methods as an object,
 		//e.g. ":arg1/:arg2" in the method definition will expect 
 		//{arg1: "foo", arg2: "bar"} as the argument to the js function. 
-		for (var i=0; i<methodArgs; i++) {
+		for (var i=0; i<methodArgs.length; i++) {
 			//Create a parser to validate argument objects
 			methodArgParsers.push(this._createArgParser(methodArgs[i]));
 		}
@@ -61,9 +65,20 @@ carplots.service.RESTService.prototype = {
 		return function(args, success_callback, error_callback) {
 			success_callback = success_callback || that._defaultSuccesstionHandler;
 			error_callback = error_callback || that._defaultErrorHandler;
+			var argsUrl = null;
+			for (var i=0; i<methodArgParsers.length; i++) {
+				var parserResult = methodArgParsers[i](args);
+				if (parserResult) {
+					argsUrl = parserResult;
+					break;
+				}
+			}
+			if (argsUrl === null) {
+				throw new Error("Invalid arguments");
+			}
 			jQuery.ajax({
 					type: "GET",
-					url: methodUrl,
+					url: methodUrl + argsUrl,
 					dataType: dataType,
 					success: success_callback,
 					error: error_callback
@@ -71,35 +86,49 @@ carplots.service.RESTService.prototype = {
 		}
 	},
 
-	_addArgs: function(baseUrl, 
-
 	_createArgParser: function(argDefinition) {
-		var argParts = (argDefinition)? [] :
-		 	argDefinition.replace(/:/g, "").split(/\//);
+		var argParts = (argDefinition)? 
+		 	argDefinition.replace(/:/g, "").split(/\//) : 
+			[];
+
+		//if there are no arguments, return a generic
+		//parser that expects zero arguments
+		if (argParts.length == 0) {
+			return this._emptyArgParser;
+		}
 
 		//if there are arguments, create a parser
 		//specific to the argument names
-		if (argParts.length > 0) {
-			var validArgNames = {};
-			for(var i=0; i<argParts.length; i++) {
-				validArgNames[argParts[i]] = true;
-			}
-			return function(args) {
-				var numFound = 0;
-				for (argName in args) {
-					if (!argName in validArgNames) {
-						break;
-					} else {
-						numFound++;
-					}
-				}
-				return numFound == validArgNames.length;
-			}
+		var validArgNames = {};
+		var numValidArgNames = argParts.length;
+		for(var i=0; i<argParts.length; i++) {
+			validArgNames[argParts[i]] = true;
 		}
-		//if there are no arguments, return a generic
-		//parser that expects zero arguments
-		else {
-			return this._emptyArgParser;
+
+		//The parser checks to see if the expected arguments 
+		//are present in the "args" object, it does not allow
+		//extraneous arguments.  If the correct arguments are present, it
+		//returns a string with the arguments in the proper order
+		//for the restful service as specified in the service definition.
+		return function(args) {
+			var numFound = 0;
+			for (argName in args) {
+				if (!argName in validArgNames) {
+					break;
+				} else {
+					numFound++;
+				}
+			}
+			if (numFound == numValidArgNames) {
+				var parsedArgs = [];
+				for (var i=0; i<argParts.length; i++) {
+					var argName = argParts[i];
+					parsedArgs.push(args[argName]);
+				}
+				return parsedArgs.join('/');
+			} else {
+				return false;
+			}
 		}
 	},
 

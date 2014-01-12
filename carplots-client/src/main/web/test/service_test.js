@@ -26,12 +26,16 @@ $(document).ready(function() {
 					methodResult.html(["<b>Missing: ", methodName ,"</b>"]
 						.join(''));
 				} else {
-					var args = testArgs[methodName];
-					service[methodName](args, function() {
-						debugger;
-					}, function() {
-						debugger;
-					});
+					var argArray = testArgs[methodName];
+					for (var i=0; i<argArray.length; i++) {
+						var args= argArray[i];
+						service[methodName](args, function(data) {
+							methodResult.html(data);
+						}, function() {
+							var args=arguments;
+							debugger;
+						});
+					}
 				}
 			}
 		}
