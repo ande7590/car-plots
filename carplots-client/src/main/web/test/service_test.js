@@ -5,7 +5,16 @@ var testData = {
 		{mmid: "1", yr: "2003", st: "2011", end:"2013", eng:"369"}]
 	},
 	metadata : {
+		getMakeModels: [
+			null, {make: "Honda"}
+		],
+		getMakes: [
 
+		],
+		getEngines: [
+		],
+		getYears: [
+		]
 	}
 }
 
@@ -23,18 +32,28 @@ $(document).ready(function() {
 				var methodResult = $("<div>").addClass("service_result");
 				svcResults.append(methodResult);
 				if (typeof(testArgs[methodName]) === "undefined") {
-					methodResult.html(["<b>Missing: ", methodName ,"</b>"]
-						.join(''));
+					methodResult.html(["<b>Missing: ", methodName ,"</b>"].join(''));
 				} else {
 					var argArray = testArgs[methodName];
+					methodResult.html(["<h3>", methodName, "</h3>"].join(''));
 					for (var i=0; i<argArray.length; i++) {
-						var args= argArray[i];
-						service[methodName](args, function(data) {
-							methodResult.html(data);
-						}, function() {
-							var args=arguments;
-							debugger;
-						});
+						(function(methodResult) {
+							var args = argArray[i];
+							try {
+								service[methodName](args, function(data) {
+									methodResult.append($('<div/>', {
+										class: 'method_call',
+										html: [
+											JSON.stringify(args), ': ', 
+											JSON.stringify(arguments)].join('')
+									}));
+									}, function() {
+										var args = arguments;
+									});
+							} catch (ex) {
+								methodResult.append("error");
+							}
+						})(methodResult);
 					}
 				}
 			}

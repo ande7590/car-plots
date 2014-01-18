@@ -42,10 +42,6 @@ carplots.service.RESTService.prototype = {
 		return service;
 	},
 
-	_addArgs: function(baseURL, args) {
-
-	},
-
 	_createServiceMethod: function(methodDef) {
 		var svcDef = this.serviceDefinition;
 		var methodUrl = [svcDef.url, "/", methodDef.location].join('');
@@ -123,17 +119,25 @@ carplots.service.RESTService.prototype = {
 				var parsedArgs = [];
 				for (var i=0; i<argParts.length; i++) {
 					var argName = argParts[i];
-					parsedArgs.push(args[argName]);
+					var argVal = args[argName];
+					// wrap string parameters in quotes (dumb couchdb thing)
+					parsedArgs.push((isNaN(parseFloat(argVal)))?
+							['', argVal, ''].join('"')
+							: argVal);
 				}
+				parsedArgs.push('');
 				return parsedArgs.join('/');
 			} else {
-				return false;
+				return null;
 			}
 		}
 	},
 
 	_emptyArgParser: function() {
-		return arguments.length == 0;
+		return (arguments.length == 0 ||
+				arguments.length === 1 && arguments[0] === null)? 
+			"/" 
+			: null;
 	},
 
 	_defaultSuccessHandler: function() {
