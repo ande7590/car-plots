@@ -6,7 +6,8 @@
 				border: 1px solid #777;
 				margin: 5px 5px;
 			}
-			.method_call {
+			.method_call, 
+			.method_call_error {
 				margin: 5px 0;
 				padding: 10px 0;
 				border: 1px solid white;
@@ -14,10 +15,14 @@
 				background: #eee;
 				overflow: auto;
 			}
+			.method_call_error {
+				border: 3px solid red;
+			}
 		</style>
-		<script src="/js/jquery-1.10.2.js"></script>
-		<script src="/js/carplots-service.js"></script>
-		<script src="/test/service_test.js"></script>
+		<script src="/carplots/js/jquery-1.10.2.js"></script>
+		<script src="/carplots/js/service-factory.js"></script>
+		<script src="/carplots/js/carplots-service.js"></script>
+		<script src="/carplots/test/service_test.js"></script>
 	</head>
 	<body>
 		<div id="testResults"></div>

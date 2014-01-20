@@ -1,8 +1,8 @@
 var testData = {
 	carplots: {
 		getPlots: [
-		{mmid: "1", yr: "2003"},
-		{mmid: "1", yr: "2003", st: "2011", end:"2013", eng:"369"}]
+		{MakeModelID: "1", Year: "2003"},
+		{MakeModelID: "1", Year: "2003", StartYear: "2011", EndYear:"2013", CarEngineID:"369"}]
 	},
 	metadata : {
 		getMakeModels: [
@@ -30,6 +30,10 @@ $(document).ready(function() {
 			var svcResults = $("<div>").html(
 				["<h1>", defName, "</h1>"].join(''));
 			$("#testResults").append(svcResults);
+
+			// Call every method in each service using the data (arguments)
+			// specified at the head of the file.  Append the results to 
+			// the page when the callback succeeds or fails.
 			for (methodName in service) {
 				var methodResult = $("<div>").addClass("service_result");
 				svcResults.append(methodResult);
@@ -42,18 +46,35 @@ $(document).ready(function() {
 						(function(methodResult) {
 							var args = argArray[i];
 							try {
-								service[methodName](args, function(data) {
-									methodResult.append($('<div/>', {
-										class: 'method_call',
-										html: [
-											JSON.stringify(args), ': ', 
-											JSON.stringify(arguments)].join('')
-									}));
-									}, function() {
-										var args = arguments;
-									});
+								service[methodName]({
+									arguments: args,
+									onSuccess: function(data) {
+										methodResult.append($('<div/>', {
+											class: 'method_call',
+											html: [
+												JSON.stringify(args), ': ', 
+												JSON.stringify(arguments)].join('')
+										}));
+									},
+									onError: function() {
+										methodResult.append($('<div/>', {
+											class: 'method_call_error',
+											html: [
+												"**ERROR** ",
+												JSON.stringify(args), ': ', 
+												JSON.stringify(arguments)].join('')
+										}));
+									}
+								});
 							} catch (ex) {
-								methodResult.append("error");
+										methodResult.append($('<div/>', {
+											class: 'method_call_error',
+											html: [
+												"**ERROR** ",
+												ex.toString(), 
+												" ",
+												JSON.stringify(args)].join('')
+										}));
 							}
 						})(methodResult);
 					}
