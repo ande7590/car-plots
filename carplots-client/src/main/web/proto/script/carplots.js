@@ -12,18 +12,20 @@
 		var context = {};
 		var contextManager = new ContextManager(context);
 		
-		//Register objects w/o any dependencies in context
-		var hashManager = new HashManager();
+		//Add function to "decorate" objects with the below properties
 		contextManager.register("decorate", function(that) {
-			that["_hash"] = hashManager.get;
 			that["_extend"] = extend;
 			that["_checkArguments"] = checkArguments;
 			that["_isNullOrUndef"] = isKeyNullOrUndefined;
 		}, true);
 		
 		//Register objects that may have dependencies in context
-		contextManager.register("carPlotViewController", new CarPlotViewController(context));
-		contextManager.register("infoBubbleFactory", new InfoBubbleFactory(context));
+		contextManager.register("carPlotViewController", 
+			new CarPlotViewController(context));
+		contextManager.register("infoBubbleFactory", 
+			new InfoBubbleFactory(context));
+		contextManager.register("autocompleteController", 
+			new AutocompleteController(context));
 		
 		//Finalize context and begin application
 		contextManager.finalize();
@@ -109,6 +111,23 @@ ContextManager.prototype = {
 	}
 }
 
+/*
+	@AutocompleteController
+*/
+function AutocompleteController(context) {
+	this.context = context;
+}
+
+AutocompleteController.prototype = {
+	start: function() {
+		this.context.decorate(this);
+		this.ui = {
+			$autoComplete: $("")
+		}
+	},
+	
+	_fetchData: function() {}
+}
 
 /*
 	@CarPlotViewController
@@ -134,7 +153,7 @@ CarPlotViewController.prototype = {
 		
 		var ctx = this.context;
 
-		var selectCarContent = "Enter a car name like \"Toyota Camry\", <small>or click Advanced Selection</small>.";
+		var selectCarContent = "Enter a car name like \"Toyota Camry\",<small> options will appear as you type.</small>";
 		var selectLocationContent = "Enter a zipcode like \"90210\", <small>or click Advanced Selection</small>.";
 
 		this.infoBubbles = {
@@ -165,38 +184,6 @@ CarPlotViewController.prototype = {
 			if (name in that.infoBubbles) {
 				that.infoBubbles[name].hide();
 			}
-		});
-	}
-}
-
-/*
-	@HashManager
-	Allows arbitrary objects to be hashed, i.e. objects other than strings and numbers
-	that do not have an intuitive way of generating a hash key.  Allows objects to
-	generate their own hash values if they choose to overload getHashKey, otherwise
-	a default implementation is provided
-*/
-function HashManager() {
-	this.keyPrefix = "hashManager" + Math.floor(Math.random() * 10000) + "_";
-	this.objId = 0;
-}
-
-HashManager.prototype = {
-	get: function(obj) {
-		if (typeof(obj) === "string" || typeof(obj) === "number") {
-			throw new Error("Hashable must be applied to non-null objects (not strings, numbers, etc).");
-		}
-		if (typeof(obj.getHashKey) !== "function") 
-		{
-			obj.getHashKey = this._createGetHashKey();
-		}
-		return obj.getHashKey();
-	},
-
-	_createGetHashKey: function() {
-		var hashKey = this.keyPrefix + (objId++);
-		return (function() {
-			return hashKey;
 		});
 	}
 }

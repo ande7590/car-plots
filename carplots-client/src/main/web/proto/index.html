@@ -13,15 +13,9 @@
 			<nav id="carSelection">
 				<form>
 
-					<div class="formGroup">
+					<div class="formGroup entryItem">
 						<label for="selectCar">
-							<div class="linkContainer">
-								<a href="javascript:void(0)" style="display: inline-block; padding: 3px 0 0px 18px;">
-									<div class="iconMini iconMiniStar" style="margin-left: -20px; margin-top: -3px; position: absolute; float:left;"></div>
-										Advanced Selection
-								</a>
-							</div>
-							Select Car
+							Vehicle
 						</label>
 						<div class="textBorder">
 							<div class="iconContainer">
@@ -31,18 +25,50 @@
 						</div>
 					</div>
 
-					<div class="formGroup">
-						<label for="selectCar">Select Location</label>
+					<div class="formGroup entryItem">
+						<label for="selectCar">Model Year</label>
 						<div class="textBorder">
 							<div class="iconContainer">
 								<div class="icon iconCalloutLeft"></div>
 							</div>
-							<input class="infoBubbleItem" type="text" name="selectLocation" placeholder="<Click Here>"/>
+							<select class="plotSelect">
+								<option>2000</option>
+							</select>
 						</div>
 					</div>
 
-					<div class="formButton">
+					<div class="formGroup entryItem" >
+						<label for="selectCar">Engine</label>
+						<div class="textBorder">
+							<div class="iconContainer">
+								<div class="icon iconCalloutLeft"></div>
+							</div>
+							<select class="plotSelect">
+								<option>2000</option>
+							</select>
+						</div>
+					</div>
 
+					<div class="formGroup buttonContainer">
+						<div class="textBorder button">
+							<div class="iconContainer">
+								<div class="icon iconPlus"></div>
+							</div>
+							<div class="buttonText">
+								Add to plot						
+							</div>							
+						</div>
+					</div>
+					
+					<div class="formGroup buttonContainer">
+						<div class="textBorder button">
+							<div class="iconContainer">
+								<div class="icon iconX"></div>
+							</div>
+							<div class="buttonText">
+								Reset plot
+							</div>
+						</div>
 					</div>
 				</form>
 			</nav>

@@ -83,20 +83,26 @@ a, a:visited {
 	width: 100%;
 	display: block;
 }
-.formGroup .textBorder {
+
+.entryItem .textBorder {
 	background: white;
+}
+
+.formGroup .textBorder {
 	padding: 10px 10px;
 	margin-top: 5px;
-	/* Round Corners */
+	/* Round Corners */	
 	border-radius: 15px; 
 	-moz-border-radius: 15px; 
 	-webkit-border-radius: 15px; 
 	border: 1px solid #D6D6D6;
+	height: 25px;
 }
 .formGroup .textBorder input {
 	width: 80%;
 	border: none;
 	outline: none;
+	vertical-align: middle;
 
 }
 .formGroup .textBorder input:focused {
@@ -104,18 +110,18 @@ a, a:visited {
 	outline: none;
 }
 .formGroup ::-webkit-input-placeholder {
- 	color: #e10; 
+ 	color: #777; 
 	font-weight: bold;
-	font-size: 9.5px;
+	font-size: 12pt;
 }
 .formGroup :-moz-placeholder {  
- 	color: #e10; 
+ 	color: #777; 
 	font-weight: bold;
 	font-size: 9.5px;
 }
 
 .formGroup :-ms-input-placeholder {
- 	color: #e10; 
+ 	color: #777; 
 	font-weight: bold;
 	font-size: 9.5px;
 }
@@ -177,12 +183,15 @@ a, a:visited {
 		font-weight: bold;
 	}
 
+.entryField {
+	background: white;
+}
 
 /* Icons */
 .icon {
 	display: inline-block;
-	height: 32px !important;
-	width: 32px !important;
+	height: 32px;
+	width: 32px;
 }
 
 .iconCalloutLeft {
@@ -194,11 +203,11 @@ a, a:visited {
 .iconInformation {
 	background: url('../img/iconSet.png') -135px 0px;
 }
-.iconAlert {
-	background: url('../img/iconSet.png');
+.iconPlus {
+	background: url('../img/iconSet.png') -10px -2px;
 }
-.iconError {
-	background: url('../img/iconSet.png');
+.iconX {
+	background: url('../img/iconSet.png') -265px -2px;
 }
 
 .iconMini {
@@ -215,3 +224,36 @@ a, a:visited {
 	background: url('../img/iconSetMini.png') -344px 0px;
 }
 
+.plotSelect {
+	background: none;
+	border: 1px solid gray;
+	font-size: 12pt;
+}
+
+.button {
+	height: 25px;
+	text-align: left;
+	vertical-align: middle;
+	font-size: 12pt;
+	border: 1px solid #333 !important;
+	cursor: pointer;
+	box-shadow: 3px 5px 2px 1px #888;
+	color: #d9eef7;
+	border: solid 1px ;
+	background: #0095cd;
+	background: -webkit-gradient(linear, left top, left bottom, from(#00adee), to(#0078a5));
+	background: -moz-linear-gradient(top, #00adee, #0078a5);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#00adee', endColorstr='#0078a5');
+}
+
+.button:hover {
+	background: #007ead;
+	background: -webkit-gradient(linear, left top, left bottom, from(#0095cc), to(#00678e));
+	background: -moz-linear-gradient(top, #0095cc, #00678e);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#0095cc', endColorstr='#00678e');
+}
+
+.buttonText {
+	padding-top: 3px;
+	text-align: center;
+}
