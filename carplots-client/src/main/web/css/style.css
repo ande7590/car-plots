@@ -67,13 +67,50 @@ a, a:visited {
 	float: left;
 	width: 23%;
 	margin-left: 2%;
-	display: none !important;
+	display: none;
 }
 #carSelection .formGroup {
 	margin: auto; 
 	margin-top: 20px;
 	min-width: 220px;
 	width: 100%;
+}
+
+#carSelection .linkContainer {
+	float: right;
+	font-size: 10px;
+}
+
+#contentBorder {
+	background: #FFF;
+	width: 95%;
+	height: 100%;
+	min-height: 500px; 
+	/* Round Corners */
+	border-radius: 12px; 
+	-moz-border-radius: 12px; 
+	-webkit-border-radius: 12px; 
+	border: 1px solid #D6D6D6;
+	margin-left: 3%;
+	/* Drop Shadow  */
+	-moz-box-shadow: 2px 2px 1px #AAA;
+	-webkit-box-shadow: 2px 2px 1px #AAA;
+	box-shadow: 2px 2px 1px #AAA;
+}
+
+#loadingIndicator span {
+	display: inline-block;
+	background: url('../img/ajax-loader.gif') no-repeat left;
+	padding-left: 45px;
+	margin-top: 25%;
+}
+
+#loadingIndicator {
+	font-size: 18pt;
+	height: 100%;
+	width: 100%;
+	text-align: center;
+	display: inline-block;
 }
 
 /* Theme & Widgets */
@@ -111,20 +148,20 @@ a, a:visited {
 	outline: none;
 }
 .formGroup ::-webkit-input-placeholder {
- 	color: #333; 
+ 	color: #FF8080; 
 	font-weight: bold;
 	font-size: 11.5pt;
 }
 .formGroup :-moz-placeholder {  
- 	color: #333; 
+ 	color: #FF8080; 
 	font-weight: bold;
 	font-size: 11.5pt;
 }
 
 .formGroup :-ms-input-placeholder {
- 	color: #777; 
+ 	color: #FF8080; 
 	font-weight: bold;
-	font-size: 9.5px;
+	font-size: 11.5px;
 }
 
 .formGroup .iconContainer {
@@ -133,33 +170,6 @@ a, a:visited {
 	margin-top: -2px;
 	margin-right: -5px;
 	float: right;
-}
-
-
-#carSelection .linkContainer {
-	float: right;
-	font-size: 10px;
-}
-
-#contentBorder {
-	background: #FFF;
-	width: 95%;
-	height: 100%;
-	min-height: 500px; 
-	/* Round Corners */
-	border-radius: 12px; 
-	-moz-border-radius: 12px; 
-	-webkit-border-radius: 12px; 
-	border: 1px solid #D6D6D6;
-	margin-left: 3%;
-	/* Drop Shadow  */
-	-moz-box-shadow: 2px 2px 1px #AAA;
-	-webkit-box-shadow: 2px 2px 1px #AAA;
-	box-shadow: 2px 2px 1px #AAA;
-}
-
-#loadingIndicator {
-	background: no-repeat left url('../img/ajax-loader.gif');
 }
 
 .infoBubbleContainer {
@@ -285,3 +295,4 @@ a, a:visited {
 	text-align: center;
 	font-weight: bold;
 }
+

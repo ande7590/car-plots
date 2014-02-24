@@ -1,11 +1,4 @@
-if(typeof(carplots)==="undefined"){
-	var carplots = {};
-} 
-if (typeof(carplots.service) ==="undefined") {
-	carplots.service = {};
-}
-
-carplots.service.definitions = {
+var ServiceDefinitions = {
 	carplots: {
 		name: "carplots", 
 		url:"/carplots/db/carplots",

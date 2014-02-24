@@ -2,17 +2,20 @@
 <html>
 	<head>
 		<link rel='stylesheet' href='css/style.css'/>
-		<script type='text/javascript' src='script/lib/jquery-1.8.2.js'></script>
-		<script type='text/javascript' src='script/lib/jquery-ui-1.9.1.custom.min.js'></script>
-		<script type='text/javascript' src='script/carplots.js'></script>
-		<title>CarPlots Prototype</title>
+		<script type='text/javascript' src='js/lib/jquery-1.8.2.js'></script>
+		<script type='text/javascript' src='js/lib/jquery-ui-1.9.1.custom.min.js'></script>
+		<script type='text/javascript' src='js/common/common.js'></script>
+		<script type='text/javascript' src='js/service/carplots-service.js'></script>		
+		<script type='text/javascript' src='js/service/service-factory.js'></script>		
+		<script type='text/javascript' src='js/controller/view.js'></script>		
+		<script type='text/javascript' src='js/startup.js'></script>
+		<title>CarPlots</title>
 	</head>
 	<body>
 		<div class="container">
-			<header id="mainHeader">Car Plots</header>
+			<header id="mainHeader">CarPlots</header>
 			<nav id="carSelection">
 				<form>
-
 					<div class="formGroup entryItem">
 						<label for="selectCar">
 							Vehicle
@@ -24,7 +27,6 @@
 							<input class="infoBubbleItem" type="text" name="selectCar" placeholder="<Click Here>"/>
 						</div>
 					</div>
-
 					<div class="formGroup entryItem">
 						<label for="selectCar">Model Year</label>
 						<div class="textBorder">
@@ -36,7 +38,6 @@
 							</select>
 						</div>
 					</div>
-
 					<div class="formGroup entryItem" >
 						<label for="selectCar">Engine</label>
 						<div class="textBorder">
@@ -48,9 +49,8 @@
 							</select>
 						</div>
 					</div>
-
 					<div class="formGroup buttonContainer">
-						<div class="textBorder button">
+						<div class="textBorder button blueButton">
 							<div class="iconContainer">
 								<div class="icon iconPlus"></div>
 							</div>
@@ -59,22 +59,23 @@
 							</div>							
 						</div>
 					</div>
-					
 					<div class="formGroup buttonContainer">
-						<div class="textBorder button">
+						<div class="textBorder button blueButton">
 							<div class="iconContainer">
 								<div class="icon iconX"></div>
 							</div>
 							<div class="buttonText">
-								Reset plot
-							</div>
+								Clear Plot						
+							</div>							
 						</div>
-					</div>
+					</div>	
 				</form>
 			</nav>
 			<div id="contentArea">
-				<div id="contentBorder">
-					
+				<div id="contentBorder">				
+					<div id="loadingIndicator">
+						Loading...
+					</div>
 				</div>
 			</div>
 		</div>

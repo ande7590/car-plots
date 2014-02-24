@@ -1,35 +1,17 @@
-if(typeof(carplots)==="undefined"){
-	var carplots = {};
-}
-if (typeof(carplots.service) ==="undefined") {
-	carplots.service = {};
-}
-
-/*
- * Web services are described declaratively in a service definitions file (using JSON)
- * Passing the definition (JSON object) into the service factory will return a proxy
- * object that allows location/protocol agnostic access to data.
- */
-carplots.service.factory = {
-	createService: function(definition) {
-		return new carplots.service.RESTService(definition);
-	}
-};
-
 /*
  * A RESTService takes a declarative (json) service definition
  * and generates a proxy object for interacting with the RESTful
  * service.  The actual object returned by the RESTService constructor
  * is NOT an instance of RESTService.
  */
-carplots.service.RESTService = function(serviceDefinition) {
+function RESTService(serviceDefinition) {
 	this.serviceDefinition = serviceDefinition
 
 	//create and return a service proxy for the serviceDefinition.
 	return this._createService();
 }
 
-carplots.service.RESTService.prototype = {
+RESTService.prototype = {
 	
 	_createService: function() {
 		var service = {};
