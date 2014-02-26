@@ -1,7 +1,7 @@
 var ServiceDefinitions = {
 	carplots: {
 		name: "carplots", 
-		url:"/carplots/db/carplots",
+		url:"/db/carplots",
 		methods: [
 		{
 			name: "getPlots",
@@ -15,7 +15,7 @@ var ServiceDefinitions = {
 	},
 	metadata: {
 		name: "metadata", 		
-		url:"/carplots/db/metadata",
+		url:"/db/metadata",
 		methods : [
 		{
 			name: "getMakeModels",

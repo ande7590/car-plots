@@ -18,23 +18,35 @@
 				<form>
 					<div class="formGroup entryItem">
 						<label for="selectCar">
-							Vehicle
+							Make
 						</label>
 						<div class="textBorder">
 							<div class="iconContainer">
 								<div class="icon iconCalloutLeft"></div>
 							</div>
-							<input class="infoBubbleItem" type="text" name="selectCar" placeholder="<Click Here>"/>
+							<select name="makeSelect" class="plotSelect">
+							</select>
 						</div>
 					</div>
 					<div class="formGroup entryItem">
-						<label for="selectCar">Model Year</label>
+						<label for="selectCar">
+							Model
+						</label>
 						<div class="textBorder">
 							<div class="iconContainer">
 								<div class="icon iconCalloutLeft"></div>
 							</div>
-							<select class="plotSelect">
-								<option>2000</option>
+							<select name="modelSelect" class="plotSelect">
+							</select>
+						</div>
+					</div>
+					<div class="formGroup entryItem">
+						<label for="selectCar">Year</label>
+						<div class="textBorder">
+							<div class="iconContainer">
+								<div class="icon iconCalloutLeft"></div>
+							</div>
+							<select name="yearSelect" class="plotSelect">
 							</select>
 						</div>
 					</div>
@@ -45,14 +57,13 @@
 							<div class="iconContainer">
 								<div class="icon iconCalloutLeft"></div>
 							</div>
-							<select class="plotSelect">
-								<option>2000</option>
+							<select name="engineSelect" class="plotSelect">
 							</select>
 						</div>
 					</div>
 
 					<div class="formGroup buttonContainer">
-						<div class="textBorder button blueButton">
+						<div id="addPlotButton" class="textBorder button blueButton">
 							<div class="iconContainer">
 								<div class="icon iconPlus"></div>
 							</div>
@@ -63,7 +74,7 @@
 					</div>
 					
 					<div class="formGroup buttonContainer">
-						<div class="textBorder button blueButton">
+						<div id="clearPlotButton" class="textBorder button blueButton">
 							<div class="iconContainer">
 								<div class="icon iconX"></div>
 							</div>

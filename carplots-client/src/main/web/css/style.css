@@ -12,16 +12,18 @@
 }*/
 
 /* Elements / Fonts */
-html, body {
+html {
+	height: 100%;
+}
+
+
+body {
 	height: 100%;
 	margin: 0;
 	padding: 0;
-}
-body {
+	
 	/* Gradient Background */
-	/*background-size: 100%; */
-	background-repeat: no-repeat;
-	background-attachment: fixed;
+	/*background-size: 100%; */	
 	background: rgb(255,255,255); /* Old browsers */
 	background: -moz-linear-gradient(top,  rgba(255,255,255,1) 0%, rgba(170,170,170,1) 100%); /* FF3.6+ */
 	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(255,255,255,1)), color-stop(100%,rgba(170,170,170,1))) fixed; /* Chrome,Safari4+ */
@@ -30,6 +32,9 @@ body {
 	background: -ms-linear-gradient(top,  rgba(255,255,255,1) 0%,rgba(170,170,170,1) 100%); /* IE10+ */
 	background: linear-gradient(to bottom,  rgba(255,255,255,1) 0%,rgba(170,170,170,1) 100%); /* W3C */
 	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#aaaaaa',GradientType=0 ); /* IE6-9 */
+
+	background-repeat: no-repeat;
+	background-attachment: fixed;
 
 	/* Font / Text */
 	font-family: Arial;

@@ -8,11 +8,126 @@ function LoadingController(context) {
 LoadingController.prototype = {
 	start: function() {
 		this.ui = {
-			
+			$loadingIndicator: $("#loadingIndicator"),
+			$carSelection: $("#carSelection")
 		}
 	},
-	setLoading: function(itemName, isLoading) {
+	
+	setLoading: function(isLoading) {
+		if (isLoading) {
+			this.ui.$loadingIndicator.show();
+		} else {
+			this.ui.$loadingIndicator.hide();
+			this.ui.$carSelection.show();
+		}
+	}
+}
+
+/*
+	@Help Controller
+*/
+function HelpController(context) {
+	this.context = context;
+}
+
+HelpController.prototype = {
+	start: function() {
+		this.ui = {
+			$make: $("select[name='makeSelect']"),
+			$model: $("select[name='modelSelect']"),
+			$year: $("select[name='yearSelect']"),
+			$engine: $("select[name='engineSelect']"),
+			$plotButton: $("#addPlotButton"),
+			$clearButton: $("#clearPlotButton")			
+		}
 		
+		this._setupHelpText();
+		this._setupArrows();
+	},
+	
+	_setupHelpText: function() {
+		
+		var that = this;
+		
+		// setup the help text for selection make, model, etc
+		var helpText = "Select a Make, Model, Year, and Engine.";					
+		var selectorHelp =  this.context.infoBubbleFactory.build({
+			of: this.ui.$make.closest(".textBorder"),
+			content: helpText			
+		});			
+		
+		// show help text after 3 seconds
+		var hndSelectorHelp = setTimeout(function() {
+			selectorHelp.show();			
+		}, that._getHelpDelayMS());
+		this.selectorHelp = selectorHelp;
+		
+		// cancel/hide the help text if the user selects something
+		this.ui.$make.on("selectMake", function() {			
+			clearTimeout(hndSelectorHelp);
+			selectorHelp.hide();
+		});		
+		
+		// help text for plot buttons
+		var buttonHelpText = this.context.infoBubbleFactory.build({
+			of: this.ui.$plotButton,
+			content: "Click \"Add to plot\"."
+		});
+		
+		var hndButtonHelp = 0;
+		this.ui.$engine.one("change", function() {
+			hndButtonHelp = setTimeout(function() {
+				if (that.ui.$engine.val() && hndButtonHelp > 0) {
+					buttonHelpText.show();
+				}				
+			}, that._getHelpDelayMS());
+			that.ui.$engine.one("change", function() {
+				clearTimeout(hndButtonHelp);
+				hndButtonHelp = 0;
+			});
+		});		
+				
+		this.ui.$plotButton.on("addPlot", function() {			
+			clearTimeout(hndButtonHelp);
+			buttonHelpText.hide();
+		});		
+	},
+	
+	_setupArrows: function() {
+		var $allArrows = $(".entryItem .iconCalloutLeft");	
+		var $allSelectors = $(".entryItem select");		
+		
+		var getSelectorValues = (function() {
+			var values = [];
+			$allSelectors.each(function(index, item) {
+				var val = $(item).val();
+				if (val) values.push(val);
+			});
+			return values;
+		});
+		
+		var updateArrows = function(index, sel) {		
+			$allArrows.hide();
+			var vals = getSelectorValues();						
+			$($allArrows.get(vals.length)).show();						
+		};
+				
+		$allSelectors.change(function(){
+			setTimeout(updateArrows, 1);
+		});	
+		updateArrows();
+	},
+	
+	_getHelpDelayMS: function() {
+		return 5000;
+	},
+	
+	_setupErrorText: function() {
+		
+	},
+	
+	_isFirstVisit: function() {
+		return true;
 	}
 }
 
@@ -27,107 +142,257 @@ GraphController.prototype = {
 		this.ui = {
 		}
 	},
+	
 	addGraph: function() {
 	},
+	
 	clear: function() {
 	}
 }
 
 /*
-	@AutocompleteController
+	@CarSelectorController
 */
-function AutocompleteController(context) {
+function CarSelectorController(context) {
 	this.context = context;
 }
 
-AutocompleteController.prototype = {
+CarSelectorController.prototype = {
 	start: function() {
 		this.context.decorate(this);
 		this.ui = {
-			$autoComplete: $("input[name='selectCar']")
+			$make: $("select[name='makeSelect']"),
+			$model: $("select[name='modelSelect']"),
+			$year: $("select[name='yearSelect']"),
+			$engine: $("select[name='engineSelect']")
+		}		
+		this.service = this.context.metadataService;
+		
+		// event handler setup
+		var that = this;
+		this.ui.$make.change(function() {									
+			that.reset(1);
+			if (that.ui.$make.val() != "") {				
+				that.updateModel();
+				that.ui.$make.trigger("selectMake");				
+			}
+		});		
+		this.ui.$model.change(function() {
+			that.reset(2);
+			if (that.ui.$model.val() != "") {				
+				that.updateYear();
+				that.ui.$model.trigger("selectModel");								
+			}						
+		});	
+			
+		this.ui.$year.change(function() {
+			that.reset(3);
+			if (that.ui.$year.val() != "") {				
+				that.updateEngine();
+				that.ui.$year.trigger("selectYear");								
+			}						
+		});
+		
+		// update make only needs to be called once
+		this.updateMake();
+	},
+	
+	updateMake: function() {
+		var $make = this.ui.$make;			
+		var that = this;
+		this.service.getMakes({
+			arguments: null,
+			onSuccess: function(makeData) {
+				$make.find('option').remove();
+				$('<option/>', {
+					text: that._getEmptySelectionText(),
+					value: ""
+				}).appendTo($make);
+				makeData.sort();
+				$(makeData).each(function(index, item) {
+					$('<option/>', {
+						text: item,
+						value: item
+					}).appendTo($make);
+				});
+			},
+			onError: this.errorHandler
+		});
+	},
+	
+	updateModel: function() {
+		var $model = this.ui.$model;
+		var that = this;
+		this.service.getMakeModels({
+			arguments: {
+				make: this.ui.$make.val()
+			},
+			onSuccess: function(makeModelData) {				
+				for (key in makeModelData) {
+					makeModelData = makeModelData[key];
+					break;
+				}
+				$model.find('option').remove();
+				$('<option/>', {
+					text: that._getEmptySelectionText(),
+					value: ""
+				}).appendTo($model);
+				
+				makeModelData.sort(function(a, b){
+					if (that._getModelNameText(a) <
+						 that._getModelNameText(b)) {
+						return -1;
+					}
+					else if (that._getModelNameText(a) >
+						 that._getModelNameText(b)) {
+						return 1;
+					}
+					return 0;
+				});
+				$(makeModelData).each(function(index, item) {					
+					$('<option/>', {
+						text: that._getModelNameText(item),
+						value: item.MakeModelID
+					}).appendTo($model);
+				});
+			},
+			onError: this.errorHandler			
+		});
+	},
+	
+	updateYear: function() {	
+		var $year = this.ui.$year;
+		var that = this;
+		this.service.getYears({
+			arguments: {
+				mmid: this.ui.$model.val()
+			},
+			onSuccess: function(yearData) {
+				for (key in yearData) {
+					yearData = yearData[key];
+					break;
+				}
+				$year.find('option').remove();
+				$('<option/>', {
+					text: that._getEmptySelectionText(),
+					value: ""
+				}).appendTo($year);
+				yearData.sort();
+				yearData.reverse();
+				$(yearData).each(function(index, item) {
+					$('<option/>', {
+						text: item,
+						value: item
+					}).appendTo($year);
+				});
+			},
+			onError: this.errorHandler
+		});
+	},
+	
+	updateEngine: function() {
+		var $engine = this.ui.$engine;
+		var that = this;
+		this.service.getEngines({
+			arguments: {
+				mmid: that.ui.$model.val(),
+				yr: that.ui.$year.val()
+			},
+			onSuccess: function(engineData) {
+				for (key in engineData) {
+					engineData = engineData[key];
+					break;
+				}
+				$engine.find('option').remove();
+				$('<option/>', {
+					text: that._getEmptySelectionText(),
+					value: ""
+				}).appendTo($engine);
+				engineData.sort(function(a,b) {
+					if (a.DisplacementCC < b.DisplacementCC)
+						return -1;
+					else if (a.DisplacementCC > b.DisplacementCC)
+						return 1;					
+					return 0;
+				});
+				$(engineData).each(function(index, item) {
+					$('<option/>', {
+						text: that._getEngineText(item),
+						value: item.CarEngineID
+					}).appendTo($engine);
+				});
+			},
+			onError: this.errorHandler
+		});
+	},	
+	
+	reset: function(itemNumber) {		
+		var that = this;
+		// if the user selects an item that is 
+		var resetChain = [
+			function() {
+				that.ui.$make.prop('selectedIndex', 0);				
+			},
+			function() {
+				that.ui.$model.find('option').remove();
+			},
+			function() {
+				that.ui.$year.find('option').remove();			
+			},
+			function() {
+				that.ui.$engine.find('option').remove();
+			}
+		];
+		itemNumber = itemNumber || 0;
+		for (var i = itemNumber; i < resetChain.length; i++) {
+			resetChain[i]();
 		}
 	},
-	_fetchData: function() {
-		
+	
+	errorHandler: function() {
+		alert("Network error");
+	},
+	
+	_getModelNameText: function(obj) {		
+		return obj.ModelName.replace(/^\W*/, "").replace(/\W$/, "");
+	},
+	
+	_getEmptySelectionText: function() {
+		return "<Select One>";
+	},
+	
+	_getEngineText: function(item) {
+		var liters = item.DisplacementCC / 1000;
+		return [liters, 'L ', item.Cylinders, ' cyl. ', 
+			' w/ ', item.Horsepower, 'HP'].join('');
 	}
 }
 
 /*
-	@CarPlotViewController
+	@InfoBubbleControllerFactory
 */
-function CarPlotViewController(context) {
+function InfoBubbleControllerFactory(context) {	
 	this.context = context;
 }
 
-CarPlotViewController.prototype = {
+InfoBubbleControllerFactory.prototype = {
 	
 	start: function() {
 		this.context.decorate(this);
 		this.ui = {
-			$selectCar: $("input[name='selectCar']"),
-			$selectLocation: $("input[name='selectLocation']")
-		};
-
-		this._createInfoBubbles();
-		this._registerEventHandlers();
-	},
-
-	_createInfoBubbles: function() {
-		
-		var ctx = this.context;
-
-		var selectCarContent = "Enter a car name like \"Toyota Camry\",<small> options will appear as you type.</small>";
-		var selectLocationContent = "Enter a zipcode like \"90210\", <small>or click Advanced Selection</small>.";
-
-		this.infoBubbles = {
-			selectCar: ctx.infoBubbleFactory.build({
-				of: this.ui.$selectCar.closest(".textBorder"),
-				content: selectCarContent
-			}),			
-			selectLocation: ctx.infoBubbleFactory.build({
-				of: this.ui.$selectLocation.closest(".textBorder"),
-				content: selectLocationContent
-			})
+			$container: $("div.container")
 		}
 	},
-
-	_registerEventHandlers: function() {
-		var that = this;
-		$(".infoBubbleItem").focus(function() {
-			var name = this.name || "";
-			$(this).data("placeholderText", $(this).attr("placeholder"));
-			$(this).attr("placeholder", "");
-			if (name in that.infoBubbles) {
-				that.infoBubbles[name].show();
-			}
-		});
-		$(".infoBubbleItem").blur(function() {
-			$(this).attr("placeholder", $(this).data("placeholderText"));
-			var name = this.name || "";
-			if (name in that.infoBubbles) {
-				that.infoBubbles[name].hide();
-			}
-		});
-	}
-}
-
-/*
-	@InfoBubbleFactory
-*/
-function InfoBubbleFactory(context) {
-	context.decorate(this);
-	this.context = context;
-}
-
-InfoBubbleFactory.prototype = {
-	build: function(options) {
+	
+	build: function(options) {		
 		
-		var viewHTML = this._createInfoBubbleViewHTML();
-		var view = $(viewHTML).hide();
-		$("div.container").append(view);
-		options["view"] = view;
-		
-		var controller = new InfoBubbleViewController(this.context, options);
+		options.view = $(this._createInfoBubbleViewHTML())
+			.hide()
+			.appendTo(this.ui.$container);
+				
+		var controller = new InfoBubbleViewController(
+			this.context, options);
+			
 		return controller;		
 	},
 
@@ -167,17 +432,14 @@ function InfoBubbleViewController(context, options) {
 	var opt = this.options;
 	this.ui = {
 		$view: $(opt.view),
-		$forElement: $(opt.forElement)
+		$forElement: $(opt.forElement),
+		$textArea: $(opt.view).find(opt.textAreaSelector)
 	}
-	this.ui["$textArea"] = this.ui.$view.find(opt.textAreaSelector);
-	
+		
 	this._init();
 }
 
 InfoBubbleViewController.prototype = {
-	start: function() {
-
-	},
 
 	_init: function() {
 		if (this.options.isContentHTML) {

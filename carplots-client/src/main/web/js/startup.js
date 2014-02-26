@@ -6,6 +6,7 @@
 	$(document).ready(function() {
 		setup(function() {
 			finishLoading();
+			$("html").trigger("carplotsLoaded");
 		});			
 	});
 	
@@ -33,18 +34,21 @@
 		var metadataService = new RESTService(ServiceDefinitions.metadata);
 		
 		// Setup data service functionality
-		contextManager.register("CarplotsService", carplotsService);
-		contextManager.register("MetadataService", metadataService);
+		contextManager.register("carplotsService", carplotsService);
+		contextManager.register("metadataService", metadataService);
 		
 		// Setup view functionality
-		contextManager.register("carPlotViewController", 
-			new CarPlotViewController(context));
+		//contextManager.register("carPlotViewController", 
+		//	new CarPlotViewController(context));
+		
 		contextManager.register("infoBubbleFactory", 
-			new InfoBubbleFactory(context));
-		contextManager.register("autocompleteController", 
-			new AutocompleteController(context));
+			new InfoBubbleControllerFactory(context));
+		contextManager.register("carSelectorController", 
+			new CarSelectorController(context));
 		contextManager.register("loadingController", 
 			new LoadingController(context));
+		contextManager.register("loadingController", 
+			new HelpController(context));
 		
 		//Finalize context and begin application
 		contextManager.finalize();
