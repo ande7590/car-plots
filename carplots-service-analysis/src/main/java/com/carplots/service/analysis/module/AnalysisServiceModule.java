@@ -5,6 +5,7 @@ import com.carplots.common.module.AbstractCarplotsModule;
 import com.carplots.common.module.CarMeta;
 import com.carplots.common.module.Scraper;
 import com.carplots.persistence.carMeta.dao.CarModelDao;
+import com.carplots.persistence.carMeta.dao.CarTrimDao;
 import com.carplots.persistence.carMeta.module.CarMetaPersistenceInitializationService;
 import com.carplots.persistence.carMeta.module.CarMetaPersistenceModule;
 import com.carplots.persistence.scraper.dao.ImportedDao;
@@ -59,6 +60,7 @@ public class AnalysisServiceModule extends AbstractCarplotsModule {
 			protected void doExpose() {
 				expose(InitializationService.class).annotatedWith(CarMeta.class);
 				expose(CarModelDao.class);
+				expose(CarTrimDao.class);
 			}
 		});
 	}

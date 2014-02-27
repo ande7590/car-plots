@@ -231,6 +231,9 @@ a, a:visited {
 .iconX {
 	background: url('../img/iconSet.png') -265px -2px;
 }
+.iconWarning {
+	background: url('../img/iconSet.png') -328px 0px !important;
+}
 
 .iconMini {
 	display: inline-block;

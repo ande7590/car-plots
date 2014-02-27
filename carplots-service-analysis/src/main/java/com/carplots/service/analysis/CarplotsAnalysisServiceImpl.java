@@ -1,20 +1,29 @@
 package com.carplots.service.analysis;
 
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.carplots.common.interfaces.InitializationService;
 import com.carplots.common.module.CarMeta;
 import com.carplots.common.module.Scraper;
 import com.carplots.common.utilities.StringMatchUtility;
 import com.carplots.persistence.carMeta.dao.CarModelDao;
+import com.carplots.persistence.carMeta.dao.CarTrimDao;
 import com.carplots.persistence.carMeta.entities.CarEngine;
 import com.carplots.persistence.carMeta.entities.CarModel;
 import com.carplots.persistence.carMeta.entities.CarTrim;
@@ -64,7 +73,10 @@ public class CarplotsAnalysisServiceImpl implements CarplotsAnalysisService {
 	CarModelDao carModelDao;
 	
 	@Inject
-	SearchDao searchDao;
+	CarTrimDao carTrimDao;
+	
+	@Inject
+	SearchDao searchDao;		
 	
 	@Inject
 	public CarplotsAnalysisServiceImpl(@CarMeta final InitializationService carMetaInitSvc, 
@@ -239,7 +251,7 @@ public class CarplotsAnalysisServiceImpl implements CarplotsAnalysisService {
 			}
 			
 			final List<CarModel> models = carModelDao.findByExample(carModel);
-			final Collection<CarEngine> finalEngineCandidates = new LinkedList<CarEngine>();
+			final List<CarEngine> finalEngineCandidates = new LinkedList<CarEngine>();
 			String engineDesc = null; 
 			boolean multipleCandidates = false;
 			
@@ -251,14 +263,14 @@ public class CarplotsAnalysisServiceImpl implements CarplotsAnalysisService {
 					final List<CarTrim> trims = model.getTrims();
 					for (CarTrim trim : trims)
 					{
-						final Collection<CarEngine> engines = trim.getEngines();
+						final Collection<CarEngine> engines = trim.getEngines();												
 						for (CarEngine engine : engines) {							
 							final Integer displacement = engine.getDisplacementCC();							
 							for (Integer i : engineSizeCandidates)
 							{
 								int epsilon = Math.abs(displacement - i);
 								if (epsilon <= engineSizeToleranceCC) {
-									finalEngineCandidates.add(engine);
+									finalEngineCandidates.add(engine);									
 									if (engine.getDescription() != null && engineDesc != null && 
 											!engine.getDescription().equals(engineDesc))
 									{
@@ -277,6 +289,15 @@ public class CarplotsAnalysisServiceImpl implements CarplotsAnalysisService {
 			
 			//displacement tie-breaker, (e.g. Turbo variants, etc)
 			if (!finalEngineCandidates.isEmpty()) {
+				Collections.sort(finalEngineCandidates, new Comparator<CarEngine>() {
+					@Override
+					public int compare(CarEngine o1, CarEngine o2) {																		
+						return (o1.getCarEngineId() < o2.getCarEngineId())?
+								1  : (o1.getCarEngineId() > o2.getCarEngineId())?
+								-1 : 0;
+					};
+				});
+								
 				if (multipleCandidates) {					
 					int minimumDistance = Integer.MAX_VALUE;
 					nearestEngine = null;
@@ -318,6 +339,62 @@ public class CarplotsAnalysisServiceImpl implements CarplotsAnalysisService {
 		}		
 		return searchMap;
 	}
-	
 
+	@Override
+	public void fixEngines() {
+		
+		final Map<String, CarEngine> uniqueEngines = 
+				new HashMap<String, CarEngine>();
+		final Map<Long, List<String>> engineMap = new HashMap<Long, List<String>>();
+		final Iterator<CarModel> iter = carModelDao.iterateAll();		
+				
+		while (iter.hasNext()) {
+			
+			final CarModel carModel = iter.next();
+			final Long makeModelId = carModel.getMakeModelId();
+						
+			if (makeModelId == null) continue;
+			
+			for (CarTrim trim : carModel.getTrims())
+			{
+				for (CarEngine engine : trim.getEngines())
+				{				
+					final String engineDesc = getEngineDesc(makeModelId, engine);
+					if (!uniqueEngines.containsKey(engineDesc)) {
+						uniqueEngines.put(engineDesc, engine);
+					}
+					final long carTrimId = trim.getCarTrimId();
+					if (!engineMap.containsKey(carTrimId)) {
+						engineMap.put(carTrimId, new LinkedList<String>());
+					}
+					engineMap.get(carTrimId).add(engineDesc);					
+				}
+			}
+			System.out.println(String.format("%s", carModel.getCarModelId()));						
+		}
+		
+		PrintWriter writer;
+		try {
+			writer = new PrintWriter("/tmp/query.sql", "UTF-8");
+		} catch (FileNotFoundException e) {
+			throw new RuntimeException(e);
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException(e);
+		}
+		
+		for (Long carTrimId : engineMap.keySet()) {
+			final CarTrim carTrim = carTrimDao.findByPk(carTrimId);
+			final List<String> engines = engineMap.get(carTrimId);
+			for (String engineDesc : engineMap.get(carTrimId)) {
+				writer.println(String.format(
+						"INSERT CarMetaDev.CarTrimEngine (CarTrimID, CarEngineID) " + 
+						  "VALUES (%s, %s);", carTrim.getCarTrimId(), 
+						 uniqueEngines.get(engineDesc).getCarEngineId()));
+			}			
+		}
+	}
+	
+	private String getEngineDesc(long makeModelId, CarEngine engine) {
+		return String.format("%s_%s_%s_%s", makeModelId, engine.getCylinders(), engine.getDisplacementCC(), engine.getHorsepower());
+	}
 }

@@ -27,4 +27,6 @@ public interface CarplotsAnalysisService {
 	void setDocumentStore(String documentStoreURL);
 	String updateDocument(String document);	
 	String createDocument(String document);
+	
+	void fixEngines();
 }

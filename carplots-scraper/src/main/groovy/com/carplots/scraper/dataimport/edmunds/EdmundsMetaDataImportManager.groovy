@@ -62,8 +62,11 @@ class EdmundsMetaDataImportManager implements DataImportManager {
 	}
 	
 	private void doImport() {
-								
-		EdmundsRepositoryImpl.edmundsMakesJSON.each { makeName ->
+		
+		//def makeJSON = EdmundsRepositoryImpl.edmundsMakesJSON
+		def makeJSON = ["BMW"] 
+		
+		makeJSON.each { makeName ->
 			def jsonData = edmundsRepository.getMakeJSON(makeName)
 			def models = jsonData["models"]
 			

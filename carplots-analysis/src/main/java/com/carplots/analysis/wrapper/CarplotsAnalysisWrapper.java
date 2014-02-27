@@ -56,8 +56,7 @@ public class CarplotsAnalysisWrapper {
 					didInit = true;
 				}
 			}
-		}
-		
+		}		
 	}	
 	
 	

@@ -38,11 +38,14 @@ HelpController.prototype = {
 			$year: $("select[name='yearSelect']"),
 			$engine: $("select[name='engineSelect']"),
 			$plotButton: $("#addPlotButton"),
-			$clearButton: $("#clearPlotButton")			
+			$clearButton: $("#clearPlotButton"),
+			$allIcons: $(".entryItem .icon"),
+			$allSelects: $(".entryItem select")
 		}
 		
 		this._setupHelpText();
-		this._setupArrows();
+		this._setupSelectorIcons();
+		this._setupMissingDataWarnings();
 	},
 	
 	_setupHelpText: function() {
@@ -54,7 +57,7 @@ HelpController.prototype = {
 		var selectorHelp =  this.context.infoBubbleFactory.build({
 			of: this.ui.$make.closest(".textBorder"),
 			content: helpText			
-		});			
+		});
 		
 		// show help text after 3 seconds
 		var hndSelectorHelp = setTimeout(function() {
@@ -63,7 +66,7 @@ HelpController.prototype = {
 		this.selectorHelp = selectorHelp;
 		
 		// cancel/hide the help text if the user selects something
-		this.ui.$make.on("selectMake", function() {			
+		this.ui.$make.change(function() {			
 			clearTimeout(hndSelectorHelp);
 			selectorHelp.hide();
 		});		
@@ -71,9 +74,11 @@ HelpController.prototype = {
 		// help text for plot buttons
 		var buttonHelpText = this.context.infoBubbleFactory.build({
 			of: this.ui.$plotButton,
-			content: "Click \"Add to plot\"."
+			content: "Click here to view the plot."
 		});
 		
+		// cancel/hide plot button help if engine 
+		// changes or plot button is clicked
 		var hndButtonHelp = 0;
 		this.ui.$engine.one("change", function() {
 			hndButtonHelp = setTimeout(function() {
@@ -90,32 +95,63 @@ HelpController.prototype = {
 		this.ui.$plotButton.on("addPlot", function() {			
 			clearTimeout(hndButtonHelp);
 			buttonHelpText.hide();
-		});		
+		});
 	},
 	
-	_setupArrows: function() {
-		var $allArrows = $(".entryItem .iconCalloutLeft");	
-		var $allSelectors = $(".entryItem select");		
+	_setupSelectorIcons: function() {
 		
-		var getSelectorValues = (function() {
-			var values = [];
-			$allSelectors.each(function(index, item) {
-				var val = $(item).val();
-				if (val) values.push(val);
-			});
-			return values;
+		var that = this;
+		var $allIcons = this.ui.$allIcons;	
+		var $allSelects = this.ui.$allSelects;
+
+		// update the little green arrows
+		var updateIcons = function() {			
+			$allIcons.hide();
+			var vals = that._getSelectValues();						
+			// show the default icon (arrow)
+			that._getIcon(vals.length).show();					
+		};
+		
+		// setup event handlers for updating arrows,
+		// AND for missing data icons		
+		$allSelects.change(function() {
+			updateIcons();
+		});	
+		updateIcons();
+	},
+	
+	_setupMissingDataWarnings: function() {
+		
+		var that = this;
+		var $allIcons = this.ui.$allIcons;
+		var $allSelects = this.ui.$allSelects;		
+		
+		var helpText = "Please make another selection.";
+		var missingDataHelp = this.context.infoBubbleFactory.build({
+			of: this.ui.$make.closest(".textBorder"),
+			content: helpText			
 		});
 		
-		var updateArrows = function(index, sel) {		
-			$allArrows.hide();
-			var vals = getSelectorValues();						
-			$($allArrows.get(vals.length)).show();						
-		};
-				
-		$allSelectors.change(function(){
-			setTimeout(updateArrows, 1);
-		});	
-		updateArrows();
+		$allSelects.on("updated", function() {
+			var vals = that._getSelectValues();
+			var lastSelectIdx = Math.max(0, vals.length - 1);
+			var lastSelect = that._getSelect(lastSelectIdx);				
+			var lastIcon = that._getIcon(lastSelectIdx);
+			var nextSelect = that._getSelect(vals.length);
+			$allIcons.removeClass("iconWarning");
+			var nextOptions = nextSelect.find("option");
+			if (nextOptions.length == 1) {
+				lastIcon.addClass("iconWarning");
+				$allIcons.hide();
+				lastIcon.show();
+				nextOptions.text("<No Data>");
+				missingDataHelp.options.of = lastSelect
+					.closest(".textBorder");
+				missingDataHelp.show();				
+			} else {
+				missingDataHelp.hide();
+			}
+		});		
 	},
 	
 	_getHelpDelayMS: function() {
@@ -128,6 +164,23 @@ HelpController.prototype = {
 	
 	_isFirstVisit: function() {
 		return true;
+	},
+	
+	_getSelectValues: function() {
+		var values = [];
+		this.ui.$allSelects.each(function(index, item) {
+			var val = $(item).val();
+			if (val) values.push(val);
+		});
+		return values;
+	},
+	
+	_getIcon: function(idx) {
+		return $(this.ui.$allIcons.get(idx));
+	},
+	
+	_getSelect: function(idx) {
+		return $(this.ui.$allSelects.get(idx));
 	}
 }
 
@@ -164,7 +217,8 @@ CarSelectorController.prototype = {
 			$make: $("select[name='makeSelect']"),
 			$model: $("select[name='modelSelect']"),
 			$year: $("select[name='yearSelect']"),
-			$engine: $("select[name='engineSelect']")
+			$engine: $("select[name='engineSelect']"),
+			$allSelects: $(".entryItem select")
 		}		
 		this.service = this.context.metadataService;
 		
@@ -172,16 +226,16 @@ CarSelectorController.prototype = {
 		var that = this;
 		this.ui.$make.change(function() {									
 			that.reset(1);
-			if (that.ui.$make.val() != "") {				
+			if (that.ui.$make.val() != "") {					
 				that.updateModel();
-				that.ui.$make.trigger("selectMake");				
+				that.ui.$model.trigger("updating");
 			}
 		});		
 		this.ui.$model.change(function() {
 			that.reset(2);
 			if (that.ui.$model.val() != "") {				
 				that.updateYear();
-				that.ui.$model.trigger("selectModel");								
+				that.ui.$year.trigger("updating");								
 			}						
 		});	
 			
@@ -189,12 +243,21 @@ CarSelectorController.prototype = {
 			that.reset(3);
 			if (that.ui.$year.val() != "") {				
 				that.updateEngine();
-				that.ui.$year.trigger("selectYear");								
-			}						
+				that.ui.$engine.trigger("updating");								
+			}
+		});		
+		
+		// lock during update
+		this.ui.$allSelects.on("updating", function() {
+			that.ui.$allSelects.prop("disabled", "disabled");
+		});
+		this.ui.$allSelects.on("updated", function() {
+			that.ui.$allSelects.removeProp("disabled");
 		});
 		
-		// update make only needs to be called once
+		// updating make only needs to happen once
 		this.updateMake();
+		that.ui.$make.trigger("updating");
 	},
 	
 	updateMake: function() {
@@ -215,6 +278,7 @@ CarSelectorController.prototype = {
 						value: item
 					}).appendTo($make);
 				});
+				$make.trigger("updated");
 			},
 			onError: this.errorHandler
 		});
@@ -255,6 +319,7 @@ CarSelectorController.prototype = {
 						value: item.MakeModelID
 					}).appendTo($model);
 				});
+				$model.trigger("updated");
 			},
 			onError: this.errorHandler			
 		});
@@ -277,14 +342,18 @@ CarSelectorController.prototype = {
 					text: that._getEmptySelectionText(),
 					value: ""
 				}).appendTo($year);
-				yearData.sort();
-				yearData.reverse();
-				$(yearData).each(function(index, item) {
-					$('<option/>', {
-						text: item,
-						value: item
-					}).appendTo($year);
-				});
+				
+				if (yearData && yearData instanceof Array) {
+					yearData.sort();
+					yearData.reverse();
+					$(yearData).each(function(index, item) {
+						$('<option/>', {
+							text: item,
+							value: item
+						}).appendTo($year);
+					});
+				}							
+				$year.trigger("updated");
 			},
 			onError: this.errorHandler
 		});
@@ -321,6 +390,7 @@ CarSelectorController.prototype = {
 						value: item.CarEngineID
 					}).appendTo($engine);
 				});
+				$("engine").trigger("updated");
 			},
 			onError: this.errorHandler
 		});

@@ -15,14 +15,14 @@ import com.carplots.scraper.test.module.EdmundsJSONFetchModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
-class EdmundsJSONFetchTestDriver {
+class EdmundsImporter {
 
 	//corresponds to number of running FireFox instances used to scrape
 	final static def numScraperThreads = 3
 	//stagger the start of threads since we need to load FireFox
 	final static def scraperThreadStartDelay = 30000
 	
-	static Logger logger = LoggerFactory.getLogger(EdmundsJSONFetchTestDriver.class)
+	static Logger logger = LoggerFactory.getLogger(EdmundsImporter.class)
 
 	void run() {
 		
@@ -38,7 +38,7 @@ class EdmundsJSONFetchTestDriver {
 	
 	static main(args) {
 		logger.debug('Starting program')
-		(new EdmundsJSONFetchTestDriver()).run()
+		(new EdmundsImporter()).run()
 		logger.debug('Finishing program')
 	}
 
