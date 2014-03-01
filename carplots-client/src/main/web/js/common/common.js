@@ -6,39 +6,27 @@
 */
 
 function ContextManager(context) {
-	this._hasFinalized = false;
-	this._waitForFinalizeContext = {};
+	this._startOrder = [];
 	this.context = context;
 }
 
 ContextManager.prototype = {
 	
 	register: function(name, object, usableBeforeFinalize) {
-		var usable = usableBeforeFinalize || false;
-		if (usable) {
-			this.context[name] = object; 
-		}
-		else {
-			this._waitForFinalizeContext[name] = object;
-		}
-	},
-
-	finalize: function() {
-		for (k in this._waitForFinalizeContext) {
-			this.context[k] = this._waitForFinalizeContext[k];
-		}
-		this._waitForFinalizeContext = null;
-		this._hasFinalized = true;
+		this.context[name] = object;
+		this._startOrder.push(name);
 	},
 
 	start: function() {
-		if (!this._hasFinalized) {
-			throw new Error("start cannot be called before finalize.");
-		}
 		var context = this.context;
-		for (objName in context) {
-			if (typeof(context[objName].start) === "function") {
-				context[objName].start();
+		for (var i=0; i<this._startOrder.length; i++) {
+			var objName = this._startOrder[i];
+			var obj = context[objName];
+			if (typeof(context.decorate) !== 'undefined') {
+				context.decorate(obj);
+			}
+			if (typeof(obj.start) === "function") {				
+				obj.start();
 			}
 		}
 	}

@@ -1,9 +1,13 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<link rel='stylesheet' href='css/style.css'/>
+		<link rel='stylesheet' href='css/style.css'/>				
 		<script type='text/javascript' src='js/lib/jquery-1.8.2.js'></script>
 		<script type='text/javascript' src='js/lib/jquery-ui-1.9.1.custom.min.js'></script>
+		<script type="text/javascript" src="js/lib/RGraph/libraries/RGraph.common.core.js" ></script>
+        <script type="text/javascript" src="js/lib/RGraph/libraries/RGraph.common.dynamic.js" ></script>
+        <script type="text/javascript" src="js/lib/RGraph/libraries/RGraph.common.key.js" ></script>
+        <script type="text/javascript" src="js/lib/RGraph/libraries/RGraph.scatter.js" ></script>
 		<script type='text/javascript' src='js/common/common.js'></script>
 		<script type='text/javascript' src='js/service/carplots-service.js'></script>		
 		<script type='text/javascript' src='js/service/service-factory.js'></script>		
@@ -86,8 +90,10 @@
 										
 				</form>
 			</nav>
-			<div id="contentArea">
+			<div id="contentArea">				
 				<div id="contentBorder">
+					<div id="graphCoordinates"><span></span></div>
+					<canvas id="graphCanvas" height="290" width="410"></canvas>
 					<div id="loadingIndicator">
 						<span>Loading...</span>
 					</div>

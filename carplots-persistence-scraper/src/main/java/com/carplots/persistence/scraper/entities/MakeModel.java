@@ -27,8 +27,11 @@ public class MakeModel implements Serializable {
 	@Column(name = "MakeName", nullable=false, length=128)
 	private String makeName;
 	
-	@Column(name = "modelName", nullable=false, length=128)
+	@Column(name = "ModelName", nullable=false, length=128)
 	private String modelName;
+	
+	@Column(name = "ParentMakeModelID")
+	private long parentMakeModelId;
 
 	public long getMakeModelId() {
 		return makeModelId;
@@ -69,5 +72,13 @@ public class MakeModel implements Serializable {
 	public void setModelName(String modelName) {
 		this.modelName = modelName;
 	}
+
+	public long getParentMakeModelId() {
+		return parentMakeModelId;
+	}
+
+	public void setParentMakeModelId(long parentMakeModelId) {
+		this.parentMakeModelId = parentMakeModelId;
+	}		
 	
 }

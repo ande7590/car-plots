@@ -31,21 +31,15 @@ function HelpController(context) {
 }
 
 HelpController.prototype = {
-	start: function() {
+	start: function() {		
 		this.ui = {
-			$make: $("select[name='makeSelect']"),
-			$model: $("select[name='modelSelect']"),
-			$year: $("select[name='yearSelect']"),
-			$engine: $("select[name='engineSelect']"),
-			$plotButton: $("#addPlotButton"),
-			$clearButton: $("#clearPlotButton"),
-			$allIcons: $(".entryItem .icon"),
-			$allSelects: $(".entryItem select")
-		}
-		
+			$allIcons: $(".entryItem .icon")
+		};		
+		this._extend(this.context.commonUI, this.ui); 
+				
 		this._setupHelpText();
 		this._setupSelectorIcons();
-		this._setupMissingDataWarnings();
+		this._setupMissingDataWarnings();				
 	},
 	
 	_setupHelpText: function() {
@@ -62,12 +56,18 @@ HelpController.prototype = {
 		// show help text after 3 seconds
 		var hndSelectorHelp = setTimeout(function() {
 			selectorHelp.show();			
-		}, that._getHelpDelayMS());
+			setTimeout(function() {				
+				hndSelectorHelp = 0;
+				selectorHelp.hide();					
+			}, that._getHelpShowMS());			
+		}, that._getHelpDelayMS());			
+						
 		this.selectorHelp = selectorHelp;
 		
 		// cancel/hide the help text if the user selects something
 		this.ui.$make.change(function() {			
 			clearTimeout(hndSelectorHelp);
+			hndSelectorHelp = 0;
 			selectorHelp.hide();
 		});		
 		
@@ -80,14 +80,23 @@ HelpController.prototype = {
 		// cancel/hide plot button help if engine 
 		// changes or plot button is clicked
 		var hndButtonHelp = 0;
+		var hndHideButtonHelp = 0;
 		this.ui.$engine.one("change", function() {
 			hndButtonHelp = setTimeout(function() {
 				if (that.ui.$engine.val() && hndButtonHelp > 0) {
 					buttonHelpText.show();
-				}				
-			}, that._getHelpDelayMS());
-			that.ui.$engine.one("change", function() {
+				}
+				hndHideButtonHelp = setTimeout(function() {
+					buttonHelpText.hide();
+				}, that._getHelpShowMS());																		
+			}, that._getHelpDelayMS());			
+			that.ui.$plotButton.click(function() {
 				clearTimeout(hndButtonHelp);
+				clearTimeout(hndHideButtonHelp);
+			});			
+			that.ui.$engine.one("updated", function() {
+				clearTimeout(hndButtonHelp);
+				clearTimeout(hndHideButtonHelp);
 				hndButtonHelp = 0;
 			});
 		});		
@@ -95,6 +104,12 @@ HelpController.prototype = {
 		this.ui.$plotButton.on("addPlot", function() {			
 			clearTimeout(hndButtonHelp);
 			buttonHelpText.hide();
+		});
+		
+		$(window).resize(function() {
+			if (selectorHelp.isVisible) {		
+				selectorHelp.reposition();			
+			}
 		});
 	},
 	
@@ -155,11 +170,11 @@ HelpController.prototype = {
 	},
 	
 	_getHelpDelayMS: function() {
-		return 5000;
+		return 10000;
 	},
 	
-	_setupErrorText: function() {
-		
+	_getHelpShowMS: function() {
+		return 6000;
 	},
 	
 	_isFirstVisit: function() {
@@ -185,21 +200,302 @@ HelpController.prototype = {
 }
 
 /*
+	@GraphButton Controller	
+*/
+function GraphButtonController(context) {
+	this.context = context;
+}
+
+GraphButtonController.prototype = {
+	start: function() {
+		var commonUI = this.context.commonUI;
+		this.ui = {
+			$plotButton: commonUI.$plotButton,
+			$clearButton: commonUI.$clearButton,
+			$allSelects: commonUI.$allSelects,
+			$engine: commonUI.$engine,
+			$model: commonUI.$model,
+			$year: commonUI.$year
+		}
+		
+		var graphController = this.context.graphController;
+		var errorText = "There isn't any data for your selection." +
+			" Please select again.";		
+		
+		// setup error messages
+		var noDataInfoController = this.context.infoBubbleFactory.build({
+			of: this.ui.$plotButton.closest(".textBorder"),
+			content: errorText,
+			icon: "iconWarning"		
+		});
+		
+		var that = this;
+		var carDataService = this.context.carplotsService;
+
+		// enable/disable buttons
+		var buttonEnabler = function() {
+			if (that._isSearchDone()) {
+				that.ui.$plotButton.show();
+				that.ui.$clearButton.show();
+			} else {
+				that.ui.$plotButton.hide();
+				if (!that.context.graphController.hasPlot()) {
+					that.ui.$clearButton.hide();
+				}
+			}
+		}
+		buttonEnabler();
+		this.ui.$allSelects.change(buttonEnabler);
+
+		// handle search
+		this.ui.$plotButton.click(function() {			
+			carDataService.getPlots({
+				arguments: {
+					mmid: that.ui.$model.val(),
+					yr: that.ui.$year.val(),					
+					eng: that.ui.$engine.val()
+				},
+				onSuccess: function(data) {
+					if (data instanceof Array && data.length > 0) {
+						var dataItemId = graphController.add(
+							that._zipPoints(data));
+						
+					} else {
+						noDataInfoController.show();			
+						$("html").click(function(){
+							noDataInfoController.hide();
+						});
+					}										
+				},
+				onError: function() {
+					alert("Network error");
+				}				
+			});			
+		});
+		
+		this.ui.$clearButton.click(function() {
+			graphController.clear();
+		});
+	},
+	
+	_isSearchDone: function() {
+		var filledIn = true;
+		this.ui.$allSelects.each(function(idx, item) {			
+			filledIn &= (!!$(item).val());
+		});
+		return filledIn;
+	},
+	
+	_zipPoints: function(data) {
+		
+		var dataItem = null;
+		var newestDataItem = 0;
+		for (var i=0; i<data.length; i++) {
+			var di = data[i];
+			if (di.value.startYear == di.value.endYear && 
+				Number(newestDataItem) < Number(di.value.endYear)) {
+				newestDataItem = di.value.endYear;
+				dataItem = di;
+			}
+		}
+		if (dataItem == null) {
+			dataItem = data[0];
+		}
+
+		var xData = dataItem.value.x;
+		var yData = dataItem.value.y;
+		var points = [];
+		for (var i=0; i<xData.length; i++) {
+			points.push([xData[i], yData[i]]);
+		}
+		
+		return points;
+	},
+	
+	_hasMaxPlots: function() {
+		
+	},
+	
+	_clearPlot: function() {
+		
+	},
+	
+	_getColor: function() {
+		return this.data[this.dataItemId];
+	}
+}
+
+/*
 	@GraphController
 */
 function GraphController(context) {
+	this.context = context;	
+	this.dataItemId = 0;
+	this.colorPool = this._getColorPool();
+	this.data = {};
 }
 
 GraphController.prototype = {
 	start: function() {
 		this.ui = {
+			$graph: this.context.commonUI.$graph,
+			$contentBorder: $("#contentBorder"),
+			graph: this.context.commonUI.$graph.get(0),
+			scatter: null			
 		}
+		
+		var xaxisLabels = [];
+		for (var i = 0; i<=200000; i+= 25000) {
+			xaxisLabels.push(i);
+		}
+		
+		this.graphOptions = {
+			rgraphProperties: {
+				'chart.gutter.bottom': 35,
+				'chart.gutter.left': 60,
+				'chart.autofit': true,
+				'chart.xmax': 200000,
+				'chart.xmin': 0,
+				'chart.ymax': 100,
+				'chart.ymin': 0,
+				'chart.background.grid.autofit.numvlines': 10,
+				'chart.xscale': true,
+				'chart.title.xaxis': "miles",
+				'chart.title.yaxis': "price",
+				'chart.line': true
+			}
+		}
+		
+		this._create();
+		
+		var that = this;
+		$(window).resize(function() {
+			that._resize();
+		});
+		
+		// <uniqueId> -> { color: "#AABBCC", x: [1,2], y:[1,2] }
+		this.data = {};
 	},
 	
-	addGraph: function() {
+	// points = [[x1,y1], [x2,y2], ...];
+	add: function(points) {				
+		var id = false;
+		if (this.colorPool.length > 0) {
+			id = this.dataItemId;			
+			this.data[id] = {
+				points: points,
+				color: this.colorPool.pop()
+			};
+			this.dataItemId++;
+			this._draw();
+		}		
+		return id;
+	},
+	
+	remove: function(dataItemId) {
+		
 	},
 	
 	clear: function() {
+		this.data = {};
+		this._draw();
+	},
+	
+	hasPlot: function() {
+		return this.numPlots() > 0;
+	},
+	
+	numPlots: function() {
+		var numPlots = 0;
+		if (typeof(this.data) == "object") {
+			for (var key in this.data) {				
+				numPlots++;
+			}	
+		}
+		return numPlots
+	},
+	
+	_create: function() {
+		
+		var graph = this.ui.graph;
+		var scatter = new RGraph.Scatter(this.ui.graph, [[0, 100], [0, 20000]]);		
+		var props = this.graphOptions.rgraphProperties;		
+		for (var propName in props) {
+			scatter.Set(propName, props[propName]);
+		}
+		
+		var coordinateDisplay = $("#graphCoordinates span");		
+		scatter.canvas.onmousemove = function (e) {				
+			var obj = e.target.__object__;
+			var coordStr = [
+				Math.round(obj.getXValue(e), 1), " miles, ",
+				"$", Math.round(obj.getYValue(e), 1)].join('');
+			coordinateDisplay.text(coordStr);
+		}
+		
+		this.scatter = scatter;
+		
+		this._resize();	
+		this.ui.$graph.show();			
+	},
+	
+	_resize: function() {
+		var $c = this.ui.$contentBorder;		
+		this.ui.$graph
+			.attr("height", $c.height())
+			.attr("width", $c.width());		
+		this._draw();					
+	},
+		
+	_draw: function() {		
+		if (this.scatter != null) {
+			var pointSets = [];
+			var pointSetColors = [];			
+			var yMax = 1000;			
+			for (var dataItemId in this.data) {
+				var dataItem = this.data[dataItemId];
+				// compute y scale
+				yMax = Math.max(dataItem.points[0][1], yMax);
+				// color the points
+				var colorPoints = dataItem.points.slice(0);
+				for (var i=0; i<colorPoints.length; i++) {
+					colorPoints[i].push('gray');
+				}				
+				pointSets.push(colorPoints);				
+				pointSetColors.push(dataItem.color);
+			}			
+			this.scatter.data = pointSets;
+            this.scatter.Set('chart.line.colors', pointSetColors);
+            this.scatter.Set('chart.ymax', 
+				Math.round(yMax / 1000, 4) * 1000);			
+			this._clearPlot();
+			this.scatter.Draw();
+		}
+	},
+	
+	_getColorPool: function() {
+		var graphColors = [
+			"#199889","#fd950d","#36fbbe","#968892",
+			"#84f318","#85d39d","#6d5900","#ffcc00",
+			"#ab5cf1","#5da5dc", "#05ac27"];
+		
+		var shuffleArray = function(array) {
+			for (var i = array.length - 1; i > 0; i--) {
+				var j = Math.floor(Math.random() * (i + 1));
+				var temp = array[i];
+				array[i] = array[j];
+				array[j] = temp;
+			}
+			return array;
+		}
+		
+		return shuffleArray(graphColors);
+	},	
+	
+	_clearPlot :function() {
+		var canvasContext = this.ui.graph.getContext("2d");		
+		var canvas = canvasContext.canvas;
+		canvasContext.clearRect(0, 0, canvas.width, canvas.height);
 	}
 }
 
@@ -213,13 +509,7 @@ function CarSelectorController(context) {
 CarSelectorController.prototype = {
 	start: function() {
 		this.context.decorate(this);
-		this.ui = {
-			$make: $("select[name='makeSelect']"),
-			$model: $("select[name='modelSelect']"),
-			$year: $("select[name='yearSelect']"),
-			$engine: $("select[name='engineSelect']"),
-			$allSelects: $(".entryItem select")
-		}		
+		this.ui = this.context.commonUI;	
 		this.service = this.context.metadataService;
 		
 		// event handler setup
@@ -247,12 +537,20 @@ CarSelectorController.prototype = {
 			}
 		});		
 		
-		// lock during update
+		// lock during select updates
 		this.ui.$allSelects.on("updating", function() {
-			that.ui.$allSelects.prop("disabled", "disabled");
+			that._lockControls();
 		});
 		this.ui.$allSelects.on("updated", function() {
-			that.ui.$allSelects.removeProp("disabled");
+			that._unlockControls();			
+		});
+		
+		// lock during graph searches
+		this.ui.$graph.on("updating", function() {
+			that._lockControls();
+		});		
+		this.ui.$graph.on("updated", function() {
+			that._unlockControls();			
 		});
 		
 		// updating make only needs to happen once
@@ -419,6 +717,14 @@ CarSelectorController.prototype = {
 		}
 	},
 	
+	_lockControls: function() {
+		this.ui.$allSelects.prop("disabled", "disabled");
+	},
+	
+	_unlockControls: function() {
+		this.ui.$allSelects.removeProp("disabled");
+	},
+	
 	errorHandler: function() {
 		alert("Network error");
 	},
@@ -450,16 +756,19 @@ InfoBubbleControllerFactory.prototype = {
 	start: function() {
 		this.context.decorate(this);
 		this.ui = {
-			$container: $("div.container")
+			$container: this.context.commonUI.$container
 		}
 	},
 	
 	build: function(options) {		
 		
+		var iconClass = options.icon || "iconInformation";
+		
 		options.view = $(this._createInfoBubbleViewHTML())
 			.hide()
-			.appendTo(this.ui.$container);
-				
+			.appendTo(this.ui.$container)
+			.find(".icon").addClass(iconClass).end();
+
 		var controller = new InfoBubbleViewController(
 			this.context, options);
 			
@@ -518,23 +827,32 @@ InfoBubbleViewController.prototype = {
 		else {
 			this.ui.$textArea.text(this.options.content);
 		}
+		this.isVisible = false;
 	},
 
 	show: function() {
+		this.isVisible = true;
 		this._showEffect();
 	},
 
 	hide: function() {
+		this.isVisible = false;
 		this._hideEffect();
 	},
 
-	_showEffect: function() {
-		var that = this;
+	reposition: function() {
+		var that = this;		
 		that.ui.$view.show().position({
 			my: that.options.my,
 			at: that.options.at,
 			of: that.options.of
-		}).hide();
+		});
+	},
+
+	_showEffect: function() {
+		var that = this;
+		that.reposition();
+		that.ui.$view.hide();
 		this.ui.$view.find(".infoBubbleText, .icon").hide(0, function() {
 			that.ui.$view.show("puff", "swing", 200, function() {
 				that.ui.$view.find(".infoBubbleText, .icon").show("bounce", "linear", 30);

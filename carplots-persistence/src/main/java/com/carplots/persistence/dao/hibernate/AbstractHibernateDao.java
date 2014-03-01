@@ -57,5 +57,10 @@ public class AbstractHibernateDao<ENTITY_TYPE extends Serializable, ENTITY_PK_TY
 		return session;
 	}
 
+	@Override
+	public void clear() {		
+		getEntityManager().clear();
+	}
+
 	
 }

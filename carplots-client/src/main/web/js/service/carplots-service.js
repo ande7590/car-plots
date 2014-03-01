@@ -9,8 +9,8 @@ var ServiceDefinitions = {
 			dataType: "json",
 			location: "plots/",
 			args: [
-				":MakeModelID/:Year",
-				":MakeModelID/:Year/:StartYear/:EndYear/:CarEngineID"]
+				":mmid/:yr",
+				":mmid/:yr/:eng"]
 		}]
 	},
 	metadata: {

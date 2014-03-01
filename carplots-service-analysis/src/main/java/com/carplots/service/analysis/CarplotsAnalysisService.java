@@ -29,4 +29,5 @@ public interface CarplotsAnalysisService {
 	String createDocument(String document);
 	
 	void fixEngines();
+	void clear();
 }

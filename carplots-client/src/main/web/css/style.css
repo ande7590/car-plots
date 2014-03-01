@@ -101,6 +101,7 @@ a, a:visited {
 	-moz-box-shadow: 2px 2px 1px #AAA;
 	-webkit-box-shadow: 2px 2px 1px #AAA;
 	box-shadow: 2px 2px 1px #AAA;
+	padding: 0px 0px;
 }
 
 #loadingIndicator span {
@@ -116,6 +117,22 @@ a, a:visited {
 	width: 100%;
 	text-align: center;
 	display: inline-block;
+}
+
+#graphCoordinates {	
+	display: inline-block;
+	float: right;
+	height: 30px;
+	position: absolute;
+	padding-left: 65px;
+	padding-top: 5px;
+}
+#graphCoordinates span {	
+	font-size: 10pt;
+}
+
+#graphCanvas {
+	cursor: crosshair;
 }
 
 /* Theme & Widgets */
@@ -171,10 +188,11 @@ a, a:visited {
 
 .formGroup .iconContainer {
 	height: 32px !important;
-	width: 32px !important;
+	width: 14%;
 	margin-top: -2px;
 	margin-right: -5px;
 	float: right;
+	text-align: center;
 }
 
 .infoBubbleContainer {
@@ -263,7 +281,6 @@ a, a:visited {
 	font-size: 12pt;
 	border: 1px solid #333 !important;
 	cursor: pointer;
-	box-shadow: 3px 5px 2px 1px #888;
 }
 
 .blueButton {
@@ -273,6 +290,7 @@ a, a:visited {
 	background: -webkit-gradient(linear, left top, left bottom, from(#00adee), to(#0078a5));
 	background: -moz-linear-gradient(top, #00adee, #0078a5);
 	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#00adee', endColorstr='#0078a5');
+	box-shadow: 3px 5px 2px 1px #888;
 }
 
 .blueButton:hover {

@@ -155,6 +155,11 @@ public class CarplotsAnalysisServiceImpl implements CarplotsAnalysisService {
 	public void setDocumentStore(String documentStoreURL) {
 		docStore = new DocumentStoreCouchDBStringImpl(documentStoreURL);		
 	}
+	
+	@Override
+	public void clear() {
+		makeModelDao.clear();
+	}
 
 	@Transactional
 	@SuppressWarnings("deprecation")

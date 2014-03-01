@@ -48,6 +48,7 @@ getMakeModels <- function(carplotsAnalysisService) {
   getMakeModelDataTable <- function(mm) {
       data.table(
         makeModelId = .jcall(mm, returnSig="J", "getMakeModelId"),
+        parentMakeModelId = .jcall(mm, returnSig="J", "getParentMakeModelId"),
         makeId = .jcall(mm, returnSig="J", "getMakeId"),
         modelId = .jcall(mm, returnSig="J", "getModelId"),
         makeName = .jcall(mm, returnSig="Ljava/lang/String;", "getMakeName"),
@@ -109,4 +110,8 @@ createDocument <- function(document, carplotsAnalysisService) {
 
 updateDocument <- function(document, carplotsAnalysisService) {
   .jcall(carplotsAnalysisService@jService, returnSig="S", "updateDocument", toJSON(document))
+}
+
+clearEntityCache <- function(carplotsAnalysisService) {
+  .jcall(carplotsAnalysisService@jService, returnSig="V", "clear")
 }

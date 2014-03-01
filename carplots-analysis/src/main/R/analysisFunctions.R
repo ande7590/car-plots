@@ -184,7 +184,7 @@ carplots.buildAndStorePlots <- function(service, makeFilter, byRunYear=FALSE) {
       carplots.create(dt, byRunYear=byRunYear, process_fn=function(car_dt, pt_data) {
         print("storing plot")
         plot_document <- list(
-          makeModelId=makeModel$makeModelId,
+          makeModelId=makeModel$parentMakeModelId,
           type="price_vs_miles",
           collection_years=unique(car_dt$run_yr),
           car_years = unique(car_dt$year),
@@ -193,6 +193,7 @@ carplots.buildAndStorePlots <- function(service, makeFilter, byRunYear=FALSE) {
         createDocument(document=plot_document, carplotsAnalysisService=service)
       })
     }
+		clearEntityCache(carplotsAnalysisService=service);
     print("done")            
   }
 }

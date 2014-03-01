@@ -13,5 +13,5 @@ public interface GenericJPADao<ENTITY_TYPE, ENTITY_PK_TYPE> {
 	void persist(ENTITY_TYPE entity);
 	ENTITY_TYPE merge(ENTITY_TYPE entity);
 	void remove(ENTITY_TYPE entity);
-	
+	void clear();
 }

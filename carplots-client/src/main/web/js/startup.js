@@ -14,6 +14,24 @@
 		$("#loadingIndicator").hide();
 		$("#carSelection").show();
 	}
+	
+	function getCommonUI() {
+		return {
+			// container
+			$container: $("div.container"),
+			// selects
+			$make: $("select[name='makeSelect']"),
+			$model: $("select[name='modelSelect']"),
+			$year: $("select[name='yearSelect']"),
+			$engine: $("select[name='engineSelect']"),
+			$allSelects: $(".entryItem select"),
+			// graph			 
+			$graph: $("#graphCanvas"),			
+			// buttons
+			$plotButton: $("#addPlotButton"),
+			$clearButton: $("#clearPlotButton"),
+		};
+	}
 
 	function setup(callback) {
 
@@ -38,20 +56,21 @@
 		contextManager.register("metadataService", metadataService);
 		
 		// Setup view functionality
-		//contextManager.register("carPlotViewController", 
-		//	new CarPlotViewController(context));
-		
+		contextManager.register("commonUI", getCommonUI());		
 		contextManager.register("infoBubbleFactory", 
 			new InfoBubbleControllerFactory(context));
 		contextManager.register("carSelectorController", 
 			new CarSelectorController(context));
 		contextManager.register("loadingController", 
 			new LoadingController(context));
-		contextManager.register("loadingController", 
+		contextManager.register("helpController", 
 			new HelpController(context));
+		contextManager.register("graphController", 
+			new GraphController(context));
+		contextManager.register("graphButtonController", 
+			new GraphButtonController(context));
 		
 		//Finalize context and begin application
-		contextManager.finalize();
 		contextManager.start();		
 		
 		callback(context);
@@ -74,7 +93,8 @@
 		var isValid = true;
 		for (var i=0; i < requiredFields; i++) {
 			var name = requiredFields[i];
-			if (typeof(requiredFields[name]) === "undefined" || requiredFields[name] === null) {
+			if (typeof(requiredFields[name]) === "undefined" || 
+				 requiredFields[name] === null) {
 				invalid.push(name);
 				isValid = false;
 			}
