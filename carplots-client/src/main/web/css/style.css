@@ -54,6 +54,7 @@ a, a:visited {
 	height: 122px;
 }
 .container {
+	position: relative;
 	min-width: 900px;
 	min-height: 610px;
 	height: 100%;
@@ -133,6 +134,92 @@ a, a:visited {
 
 #graphCanvas {
 	cursor: crosshair;
+}
+
+#plotInfoDiv {
+	position: absolute;
+	padding-left: 20px;	
+	display: inline-block;
+	right: 15px;
+	top: 90px;
+	text-indent: 0px;
+	height: 16px;
+	vertical-align: middle;
+}
+#plotInfoDiv .miniIcon {
+	display: inline-block;
+	height: 16px;
+	width: 16px;
+	background: url('../img/iconSetMini.png') -74px -1px;
+}
+
+.legend 
+{
+	display: inline-block;
+	position: absolute;
+	right: 8px;
+	margin-top: 15px;
+	width: 250px;
+	
+}
+.legend > ul 
+{
+	list-style-type: square;
+	list-style-position: inside;
+	font-size: 1.5em;
+	margin: 10px 10px;
+	padding: 0 0;         
+}         
+
+.legend li 
+{                
+	position: relative;
+	vertical-align: top;  
+	padding-left: 5px;              
+}
+
+.legend li:hover
+{                
+	font-weight: bold;
+}
+
+.legend .textArea 
+{
+	display: inline-block;
+	vertical-align: top;
+	width: 175px;
+	height: 16px;
+	color: black !important;
+}
+
+.legend .accessoryArea 
+{
+	display: inline-block;
+	vertical-align: top;
+	width: 20px;
+	text-align: right;
+	position: absolute;
+	float: right;
+}
+
+.legend .text
+{                
+	padding-top: 5px;
+	vertical-align: middle;
+	font-size: 10pt;
+}
+.legend .button
+{            
+	vertical-align: middle;
+	font-size: 10pt;
+	text-decoration: underline;  
+	cursor: pointer; 
+	color: blue !important;         
+	border: none !important;
+	display: inline-block;
+	width: 16px;
+	height: 16px;
+	background: url('../img/iconSetMini.png') -143px -2px;
 }
 
 /* Theme & Widgets */

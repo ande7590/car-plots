@@ -37,27 +37,31 @@ carplots.plot_default <- function() {
 #if a point isn't monotonically decreasing,
 #compute a taylor series approximation based on the delta
 # and value of the previous point (i.e. a known "good" point)
-carplots.decreasing_taylor_smoother <- function(xy_pair) {  
+carplots.decreasing_taylor_smoother <- function(xy_pair, doTrace=FALSE) {
   if (length(xy_pair$x) > 1) {       
     delta_1 <- 0
     delta_2 <- 0
     gamma <- 1
-    for(i in 2:(length(xy_pair$x))) {     
+    for(i in 2:(length(xy_pair$x))) {       
       #if a point isn't decreasing
       epsilon <- xy_pair$x[i] - xy_pair$x[i - 1]
       if (xy_pair$y[i-1] < xy_pair$y[i]) {
         #take the minimum of the last point, or (hopefully) a taylor series approximation what the value
         #should be            
         taylor_approx <- xy_pair$y[i-1] + 
-                          (epsilon * delta_1) +
-                          (epsilon^2 * .5 * gamma)
-        xy_pair$y[i] <- min(xy_pair$y[i-1], taylor_approx)       
+          (epsilon * delta_1) +
+          (epsilon^2 * .5 * gamma)
+        xy_pair$y[i] <- max(min(xy_pair$y[i-1], taylor_approx), 0)
       }      
       delta_2 <- delta_1
       delta_1 <- (xy_pair$y[i] - xy_pair$y[i - 1]) / epsilon 
       gamma <- (delta_2 - delta_1) / epsilon
     }
   }
+  if (doTrace) {
+    browser();
+  }
+  
   xy_pair  
 }
 
@@ -75,45 +79,49 @@ carplots.create <- function(dt, plot=FALSE, plot_overlay=FALSE, process_fn=funct
   if (plot == TRUE && plot_overlay == FALSE) {
     carplots.plot_default();
   }
-	
-	#use a rainbow for diagnostic plots, i.e. the graph should look like a rainbow
-	#since the price should decrease (w/ everything else held constant) with the car's year.
-	#i.e. the partial derivative of price w.r.t the car's year is a decreasing function
+  
+  #use a rainbow for diagnostic plots, i.e. the graph should look like a rainbow
+  #since the price should decrease (w/ everything else held constant) with the car's year.
+  #i.e. the partial derivative of price w.r.t the car's year is a decreasing function
   colors <- rainbow(50);
-
-	#some globals for the processing functions below
+  
+  #some globals for the processing functions below
   carplots_legend_desc <<- c()
   carplots_col_iter <<- 1;
-
-	#the main processing function, once we have sliced and diced the 
-	#car by year, engine, etc, we call this to generate a plot (or points)
-	process_car_plot <- function(dt_car) {
-      if ( nrow(dt_car) >= carplots.MINIMUM_DATASET_SIZE &&
-          length(unique(dt_car$miles_bin)) >= carplots.MINIMUM_MILEAGE_BINS) {        
-        dt_car <- dt_car[miles <= carplots.MILEAGE_MAX, ]        
-        car_pts <- dt_car[, unique(price_aggregate), by=miles_bin]          
-        car_lowess <- lowess(car_pts$miles_bin, car_pts$V1)              
-        #add bogus point onto end so decreasing_taylor_smoother will extrapolate if necessary
-        car_lowess$x <- c(car_lowess$x, carplots.MILEAGE_MAX + 1)
-        car_lowess$y <- c(car_lowess$y, .Machine$integer.max)
-        car_lowess <- carplots.decreasing_taylor_smoother(car_lowess)  
-        if (plot) {
-          lines(car_lowess$x, car_lowess$y , col=colors[carplots_col_iter])
-          carplots_col_iter <<- carplots_col_iter + 1
-          carplots_legend_desc <<- c(carplots_legend_desc, paste(dt_car$year[1]), collapse=" "); 
-        } else {
-					#callback for external function to process this piece of sliced data (e.g. store it).
-					#re-slicing the data table returned (below) by the outer-loops is expensive
-          
-          process_fn(dt_car, car_lowess)
-        }
-        car_lowess #<-outer-loops return an aggregated data table with
+  
+  #the main processing function, once we have sliced and diced the 
+  #car by year, engine, etc, we call this to generate a plot (or points)
+  process_car_plot <- function(dt_car) {
+    if ( nrow(dt_car) >= carplots.MINIMUM_DATASET_SIZE &&
+           length(unique(dt_car$miles_bin)) >= carplots.MINIMUM_MILEAGE_BINS) {        
+      dt_car <- dt_car[miles <= carplots.MILEAGE_MAX, ]        
+      car_pts <- dt_car[, unique(price_aggregate), by=miles_bin]          
+      car_lowess <- lowess(car_pts$miles_bin, car_pts$V1)              
+      #add bogus point onto end so decreasing_taylor_smoother will extrapolate if necessary
+      car_lowess$x <- c(car_lowess$x, carplots.MILEAGE_MAX + 1)
+      car_lowess$y <- c(car_lowess$y, .Machine$integer.max)
+      doTrace <- FALSE;
+      if (unique(dt_car$year) == c("2011") )  {
+        doTrace <- TRUE;
       }      
-	}
-    
-	
-	#slice and dice
-	#for sure we will use the car year and engine as strata
+      car_lowess <- carplots.decreasing_taylor_smoother(car_lowess, doTrace);  
+      if (plot) {
+        lines(car_lowess$x, car_lowess$y , col=colors[carplots_col_iter])
+        carplots_col_iter <<- carplots_col_iter + 1
+        carplots_legend_desc <<- c(carplots_legend_desc, paste(dt_car$year[1]), collapse=" "); 
+      } else {
+        #callback for external function to process this piece of sliced data (e.g. store it).
+        #re-slicing the data table returned (below) by the outer-loops is expensive
+        
+        process_fn(dt_car, car_lowess)
+      }
+      car_lowess #<-outer-loops return an aggregated data table with
+    }      
+  }
+  
+  
+  #slice and dice
+  #for sure we will use the car year and engine as strata
   
   #slice on car year
   by(dt, dt$year, function(dt_year) {
@@ -126,13 +134,13 @@ carplots.create <- function(dt, plot=FALSE, plot_overlay=FALSE, process_fn=funct
         });
       } else {
         process_car_plot(dt_engine);
-		  }
+      }
     });
   });
 }
 
 carplots.apply <- function(dt, binResolution=5000, price_aggregate_fn=mean, 
-                               reduceYear=TRUE, reduceEngineId=TRUE) {
+                           reduceYear=TRUE, reduceEngineId=TRUE) {
   
   numBins <- carplots.MILEAGE_MAX / binResolution
   binCuts <- binResolution * (1:numBins)
@@ -159,7 +167,7 @@ carplots.apply <- function(dt, binResolution=5000, price_aggregate_fn=mean,
     cond_reduce(reduceEngineId, by(dt_yr, dt_yr$engineId, each_engine))
   }
   dt$year <- factor(dt$year)
-    
+  
   retVal <- cond_reduce(reduceYear, by(dt, dt$year, each_year))
   #adjust bin labels to be bin start rather than end and adjust for off-by-one with labels
   retVal$miles_bin = retVal$miles_bin - (2 * binResolution)
@@ -176,7 +184,7 @@ carplots.buildAndStorePlots <- function(service, makeFilter, byRunYear=FALSE) {
   for (i in 1:nrow(makesToProcess)) {
     makeModel <- makesToProcess[i]
     print(paste(c("fetching ", makeModel), collapse=" "))
-    dt <- getImported(makeModelId=makeModel$makeModelId, service)      
+    dt <- getImported(makeModelId=makeModel$makeModelId, service)   
     dt <- carplots.clean(dt)
     print(paste("creating plot from ", nrow(dt), " data points"))
     if (nrow(dt) > 0) {
@@ -193,7 +201,7 @@ carplots.buildAndStorePlots <- function(service, makeFilter, byRunYear=FALSE) {
         createDocument(document=plot_document, carplotsAnalysisService=service)
       })
     }
-		clearEntityCache(carplotsAnalysisService=service);
+    clearEntityCache(carplotsAnalysisService=service);
     print("done")            
   }
 }

@@ -13,8 +13,9 @@ public class TestDriver {
 		CarplotsAnalysisServiceImpl service = null;
 		try {
 			service = (new CarplotsAnalysisWrapper()).getCarplotsAnalysisService();
+			service.getImported(78);
 			//service.getImported(10);
-			service.fixEngines();
+			//service.fixEngines();
 		} catch (Exception e) {
 			System.out.println("ERROR creating/getting service");
 			e.printStackTrace();

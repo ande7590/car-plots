@@ -237,7 +237,7 @@ public class CarplotsAnalysisServiceImpl implements CarplotsAnalysisService {
 		if (imported.getEngine() != null && search != null && search.getSearchId() > 0) {
 			final CarModel carModel = new CarModel();
 			carModel.setYear(imported.getCarYear());
-			carModel.setMakeModelId(search.getMakeModel().getMakeModelId());
+			carModel.setMakeModelId(search.getMakeModel().getParentMakeModelId());
 			
 			final String[] cleanStringParts = imported.getEngine().replaceAll(engineCleanRegex, " ")
 					.split(" ");

@@ -69,6 +69,8 @@
 			new GraphController(context));
 		contextManager.register("graphButtonController", 
 			new GraphButtonController(context));
+		contextManager.register("legendController", 
+			new LegendController(context));
 		
 		//Finalize context and begin application
 		contextManager.start();		

@@ -56,10 +56,6 @@ HelpController.prototype = {
 		// show help text after 3 seconds
 		var hndSelectorHelp = setTimeout(function() {
 			selectorHelp.show();			
-			setTimeout(function() {				
-				hndSelectorHelp = 0;
-				selectorHelp.hide();					
-			}, that._getHelpShowMS());			
 		}, that._getHelpDelayMS());			
 						
 		this.selectorHelp = selectorHelp;
@@ -85,10 +81,7 @@ HelpController.prototype = {
 			hndButtonHelp = setTimeout(function() {
 				if (that.ui.$engine.val() && hndButtonHelp > 0) {
 					buttonHelpText.show();
-				}
-				hndHideButtonHelp = setTimeout(function() {
-					buttonHelpText.hide();
-				}, that._getHelpShowMS());																		
+				}				
 			}, that._getHelpDelayMS());			
 			that.ui.$plotButton.click(function() {
 				clearTimeout(hndButtonHelp);
@@ -104,13 +97,7 @@ HelpController.prototype = {
 		this.ui.$plotButton.on("addPlot", function() {			
 			clearTimeout(hndButtonHelp);
 			buttonHelpText.hide();
-		});
-		
-		$(window).resize(function() {
-			if (selectorHelp.isVisible) {		
-				selectorHelp.reposition();			
-			}
-		});
+		});		
 	},
 	
 	_setupSelectorIcons: function() {
@@ -162,7 +149,10 @@ HelpController.prototype = {
 				nextOptions.text("<No Data>");
 				missingDataHelp.options.of = lastSelect
 					.closest(".textBorder");
-				missingDataHelp.show();				
+				missingDataHelp.show(false);
+				$("html").click(function() {
+					missingDataHelp.hide();
+				});
 			} else {
 				missingDataHelp.hide();
 			}
@@ -215,17 +205,26 @@ GraphButtonController.prototype = {
 			$allSelects: commonUI.$allSelects,
 			$engine: commonUI.$engine,
 			$model: commonUI.$model,
+			$make: commonUI.$make,
 			$year: commonUI.$year
 		}
 		
 		var graphController = this.context.graphController;
+				
+		// setup error messages
 		var errorText = "There isn't any data for your selection." +
 			" Please select again.";		
-		
-		// setup error messages
 		var noDataInfoController = this.context.infoBubbleFactory.build({
 			of: this.ui.$plotButton.closest(".textBorder"),
 			content: errorText,
+			icon: "iconWarning"		
+		});
+		
+		var maxPlotsText = "Too many plots. Click \"Clear Plot\"" +
+			" or remove one from the legend.";		
+		var maxPlotsInfoController = this.context.infoBubbleFactory.build({
+			of: this.ui.$clearButton.closest(".textBorder"),
+			content: maxPlotsText,
 			icon: "iconWarning"		
 		});
 		
@@ -246,36 +245,63 @@ GraphButtonController.prototype = {
 		}
 		buttonEnabler();
 		this.ui.$allSelects.change(buttonEnabler);
-
-		// handle search
+		
+		var legendController = that.context.legendController;
+	
+		// handle search		
 		this.ui.$plotButton.click(function() {			
-			carDataService.getPlots({
-				arguments: {
-					mmid: that.ui.$model.val(),
-					yr: that.ui.$year.val(),					
-					eng: that.ui.$engine.val()
-				},
-				onSuccess: function(data) {
-					if (data instanceof Array && data.length > 0) {
-						var dataItemId = graphController.add(
-							that._zipPoints(data));
-						
-					} else {
-						noDataInfoController.show();			
-						$("html").click(function(){
-							noDataInfoController.hide();
-						});
-					}										
-				},
-				onError: function() {
-					alert("Network error");
-				}				
-			});			
+			if (graphController.hasMaxPlots()) {
+				maxPlotsInfoController.show(false);
+				$("html").click(function() {
+					maxPlotsInfoController.hide();
+				});
+			} else {
+				carDataService.getPlots({
+					arguments: {
+						mmid: that.ui.$model.val(),
+						yr: that.ui.$year.val(),					
+						eng: that.ui.$engine.val()
+					},
+					onSuccess: function(data) {
+						if (data instanceof Array && data.length > 0) {
+							var dataItem = graphController.add(
+								that._zipPoints(data));
+							legendController.add(
+								that._getText(dataItem), 
+								dataItem.color,				
+								function() {
+									graphController.remove(dataItem.id);
+									return true;
+								}
+							 );						
+						} else {
+							noDataInfoController.show();
+						}										
+					},
+					onError: function() {
+						alert("Network error");
+					}				
+				});				
+			}															
 		});
 		
 		this.ui.$clearButton.click(function() {
 			graphController.clear();
+			legendController.clear();
 		});
+	},
+	
+	_getText: function(data) {
+		var text = [
+			this.ui.$year.val(),
+			this.ui.$make.val(),
+			this.ui.$model.find("option:selected").text(),
+			this.ui.$engine.find("option:selected").text()
+		].join(' ');
+		
+		return (text.length > 28)?
+			(text.substring(0, 25) + "...")
+			: text;			
 	},
 	
 	_isSearchDone: function() {
@@ -311,17 +337,51 @@ GraphButtonController.prototype = {
 		
 		return points;
 	},
-	
-	_hasMaxPlots: function() {
-		
-	},
-	
-	_clearPlot: function() {
-		
-	},
-	
+
 	_getColor: function() {
 		return this.data[this.dataItemId];
+	}
+}
+
+/*
+	@LegendController
+*/
+function LegendController(context) {
+	this.context = context;
+}
+
+LegendController.prototype = {
+	
+	start: function() {
+		this.ui = {
+			$legend: $("#graphLegend") 
+		}
+	},
+	
+	add: function(text, color, onRemove) {
+		var $item = $(this._getLegendItem(text, color));
+		$item.appendTo(this.ui.$legend.find("ul"))
+			.find(".button").click(function() {
+				if (onRemove()) {
+					$item.remove();
+				}
+			});
+	}, 
+	
+	clear: function() {
+		this.ui.$legend.find("li").remove();
+	},
+	
+	_getLegendItem: function(text, hexColor) {
+		return [
+			"<li style=\"color:", hexColor, ";\">",
+				"<div class=\"textArea\">",
+					"<span class=\"text\">", text, "</span>",
+				"</div>",
+				"<div class=\"accessoryArea\">",
+					"<div class=\"button\"></div>",
+				"</div>",
+			"</li>"].join('');
 	}
 }
 
@@ -330,9 +390,7 @@ GraphButtonController.prototype = {
 */
 function GraphController(context) {
 	this.context = context;	
-	this.dataItemId = 0;
-	this.colorPool = this._getColorPool();
-	this.data = {};
+	this.clear();
 }
 
 GraphController.prototype = {
@@ -362,7 +420,8 @@ GraphController.prototype = {
 				'chart.xscale': true,
 				'chart.title.xaxis': "miles",
 				'chart.title.yaxis': "price",
-				'chart.line': true
+				'chart.line': true,
+				'chart.line.linewidth': 1.5
 			}
 		}
 		
@@ -383,20 +442,28 @@ GraphController.prototype = {
 		if (this.colorPool.length > 0) {
 			id = this.dataItemId;			
 			this.data[id] = {
+				id: id,
 				points: points,
 				color: this.colorPool.pop()
 			};
 			this.dataItemId++;
 			this._draw();
 		}		
-		return id;
+		return this.data[id];
 	},
 	
 	remove: function(dataItemId) {
-		
+		var dataItem = this.data[dataItemId];
+		if (dataItem) {
+			this.colorPool.push(dataItem.color);
+			delete this.data[dataItemId];
+			this._draw();
+		}
 	},
 	
 	clear: function() {
+		this.dataItemId = 0;
+		this.colorPool = this._getColorPool();
 		this.data = {};
 		this._draw();
 	},
@@ -415,10 +482,14 @@ GraphController.prototype = {
 		return numPlots
 	},
 	
+	hasMaxPlots: function() {
+		return this.colorPool.length == 0;
+	},
+	
 	_create: function() {
 		
 		var graph = this.ui.graph;
-		var scatter = new RGraph.Scatter(this.ui.graph, [[0, 100], [0, 20000]]);		
+		var scatter = new RGraph.Scatter(this.ui.graph, []);		
 		var props = this.graphOptions.rgraphProperties;		
 		for (var propName in props) {
 			scatter.Set(propName, props[propName]);
@@ -431,10 +502,8 @@ GraphController.prototype = {
 				Math.round(obj.getXValue(e), 1), " miles, ",
 				"$", Math.round(obj.getYValue(e), 1)].join('');
 			coordinateDisplay.text(coordStr);
-		}
-		
-		this.scatter = scatter;
-		
+		}		
+		this.scatter = scatter;		
 		this._resize();	
 		this.ui.$graph.show();			
 	},
@@ -459,7 +528,7 @@ GraphController.prototype = {
 				// color the points
 				var colorPoints = dataItem.points.slice(0);
 				for (var i=0; i<colorPoints.length; i++) {
-					colorPoints[i].push('gray');
+					colorPoints[i].push('black');
 				}				
 				pointSets.push(colorPoints);				
 				pointSetColors.push(dataItem.color);
@@ -476,8 +545,8 @@ GraphController.prototype = {
 	_getColorPool: function() {
 		var graphColors = [
 			"#199889","#fd950d","#36fbbe","#968892",
-			"#84f318","#85d39d","#6d5900","#ffcc00",
-			"#ab5cf1","#5da5dc", "#05ac27"];
+			"#84f318","#ff3838","#6d5900","#003891",
+			"#ab5cf1","#5da5dc", "#fa379c"];
 		
 		var shuffleArray = function(array) {
 			for (var i = array.length - 1; i > 0; i--) {
@@ -688,7 +757,7 @@ CarSelectorController.prototype = {
 						value: item.CarEngineID
 					}).appendTo($engine);
 				});
-				$("engine").trigger("updated");
+				$engine.trigger("updated");
 			},
 			onError: this.errorHandler
 		});
@@ -718,11 +787,11 @@ CarSelectorController.prototype = {
 	},
 	
 	_lockControls: function() {
-		this.ui.$allSelects.prop("disabled", "disabled");
+		this.ui.$allSelects.prop("disabled", true);
 	},
 	
 	_unlockControls: function() {
-		this.ui.$allSelects.removeProp("disabled");
+		this.ui.$allSelects.prop("disabled", false);
 	},
 	
 	errorHandler: function() {
@@ -828,11 +897,32 @@ InfoBubbleViewController.prototype = {
 			this.ui.$textArea.text(this.options.content);
 		}
 		this.isVisible = false;
+		
+		var that = this;
+		$(window).resize(function() {
+			if (that.isVisible) {		
+				that.reposition();			
+			}
+		});
+		this.currentShowId = 0;
 	},
 
-	show: function() {
+	show: function(autohide) {				
+		var that = this;
 		this.isVisible = true;
 		this._showEffect();
+		autohide = typeof(autohide === "undefined")? 
+			true 
+			: autohide;			
+		if (autohide) {
+			(function(id) {
+				setTimeout(function() {
+					if (that.currentShowId == id) {
+						that.hide();
+					}
+				}, 6000);
+			})(++this.currentShowId);			
+		}
 	},
 
 	hide: function() {

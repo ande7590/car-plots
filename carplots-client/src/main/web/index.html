@@ -17,7 +17,14 @@
 	</head>
 	<body>
 		<div class="container">
-			<header id="mainHeader">CarPlots</header>
+			<header id="mainHeader">
+				<div id="plotInfoDiv">
+					<div class="miniIcon"></div>
+					<a href="javascript:void(0)">
+						How to read the plots
+					</a>					
+				</div>
+			</header>
 			<nav id="carSelection">
 				<form>
 					<div class="formGroup entryItem">
@@ -93,6 +100,9 @@
 			<div id="contentArea">				
 				<div id="contentBorder">
 					<div id="graphCoordinates"><span></span></div>
+					<div id="graphLegend" class="legend">
+					<ul></ul>					
+					</div>
 					<canvas id="graphCanvas" height="290" width="410"></canvas>
 					<div id="loadingIndicator">
 						<span>Loading...</span>
